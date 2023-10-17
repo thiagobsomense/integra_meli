@@ -1,0 +1,11 @@
+autopep8==2.0.4
+certifi==2023.7.22
+charset-normalizer==3.3.0
+greenlet==3.0.0
+idna==3.4
+pycodestyle==2.11.1
+requests==2.31.0
+SQLAlchemy==2.0.22
+tomli==2.0.1
+typing_extensions==4.8.0
+urllib3==2.0.6
