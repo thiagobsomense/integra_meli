@@ -18,18 +18,18 @@ class Orders():
             'order.status': 'paid'
         }
         url = {self.api_orders}
-
+        
         response = requests.get(url, headers=self.headers, params=urlencode(params))
-        return response.json()
+        return response.json() if response else response.status_code
 
     def archived_orders(self):
         params = {
             'seller': self.client_id
         }
         url = f'{self.api_orders}/archived'
-
+        
         response = requests.get(url, headers=self.headers, params=urlencode(params))
-        return response.json()
+        return response.json() if response else response.status_code
 
     def recents_orders(self):
         params = {
@@ -38,7 +38,7 @@ class Orders():
         url = f'{self.api_orders}/recent'
 
         response = requests.get(url, headers=self.headers, params=urlencode(params))
-        return response.json()
+        return response.json() if response else response.status_code
 
     def products():
         pass
