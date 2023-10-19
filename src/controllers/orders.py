@@ -112,7 +112,7 @@ def download_order(order_api, api_offset):
                         'return_details': shipping['return_details'],
                         'sender_id': shipping['sender_id'],
                         'mode': shipping['mode'],
-                        'order_cost': shipping['order_cost'],
+                        'order_cost': None,
                         'priority_class': shipping['priority_class'],
                         'service_id': shipping['service_id'],
                         'tracking_number': shipping['tracking_number'],
@@ -136,17 +136,16 @@ def download_order(order_api, api_offset):
                         'logistic_type': shipping['logistic_type']
                     }
 
-                    session.add(PedidoEnvioML(data_atualizacao=datetime.now(), **shipping_data))
+                    # session.add(PedidoEnvioML(data_atualizacao=datetime.now(), **shipping_data))
                     
                 print(f"ADICIONANDO VENDA {order['id']} - {len(order['order_items'])} ITEM(S)")
                 session.add(PedidoML(data_atualizacao=datetime.now(), **data))
             else:
                 print(f"ATUALIZANDO VENDA {order['id']} - {len(order['order_items'])} ITEM(S)")
-                pedido.update(data)
-                print(shipping_data)
-                session.query(PedidoEnvioML).filter(shipping_id=data['shipping_id']).update(shipping_data)
+                # pedido.update(data)
+                # session.query(PedidoEnvioML).filter(shipping_id=data['shipping_id']).update(shipping_data)
 
-                if len(order['payments']) > 0: 
+                """ if len(order['payments']) > 0: 
                     for payment in order['payments']:
                         print(payment['id'])
                         payment_updated = session.query(PedidoPgtoML).filter(PedidoPgtoML.payment_id == func.binary(payment['id']))
@@ -158,7 +157,7 @@ def download_order(order_api, api_offset):
                                 'status': payment['status'],
                             }
 
-                            payment_updated.update(payment_data)
+                            payment_updated.update(payment_data) """
 
         session.commit()
     else:
