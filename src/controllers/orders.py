@@ -2,7 +2,7 @@ from datetime import datetime
 from math import floor
 from sqlalchemy import func
 from api.orders import Orders
-from database import session, LojaML, PedidoML, PedidoItemML, PedidoPgtoML
+from database import session, LojaML, PedidoML, PedidoItemML, PedidoPgtoML, PedidoEnvioML
 
 
 def download_order(order_api, api_offset):
@@ -99,12 +99,52 @@ def download_order(order_api, api_offset):
                     }
 
                     session.add(PedidoPgtoML(data_atualizacao=datetime.now(), **payment_data))
+
+                    shipping = order_api.shipping(data['shipping_id'])
+                    shipping_data = {
+                        'user_id': shipping['sender_id'],
+                        'ml_order_id': shipping['order_id'],
+                        'substatus_history': None,
+                        'snapshot_packing': shipping['snapshot_packing'],
+                        'receiver_id': shipping['receiver_id'],
+                        'base_cost': shipping['base_cost'],
+                        'type': shipping['type'],
+                        'return_details': shipping['return_details'],
+                        'sender_id': shipping['sender_id'],
+                        'mode': shipping['mode'],
+                        'order_cost': shipping['order_cost'],
+                        'priority_class': shipping['priority_class'],
+                        'service_id': shipping['service_id'],
+                        'tracking_number': shipping['tracking_number'],
+                        'shipping_id': shipping['id'],
+                        'tracking_method': shipping['tracking_method'],
+                        'last_updated': shipping['last_updated'],
+                        'items_types': shipping['items_types'],
+                        'comments': shipping['comments'],
+                        'substatus': shipping['substatus'],
+                        'date_created': shipping['date_created'],
+                        'date_first_printed': shipping['date_first_printed'],
+                        'created_by': shipping['created_by'],
+                        'application_id': shipping['application_id'],
+                        'return_tracking_number': shipping['return_tracking_number'],
+                        'site_id': shipping['site_id'],
+                        'carrier_info': shipping['carrier_info'],
+                        'market_place': shipping['market_place'],
+                        'customer_id': shipping['customer_id'],
+                        'quotation': shipping['quotation'],
+                        'status': shipping['status'],
+                        'logistic_type': shipping['logistic_type']
+                    }
+
+                    session.add(PedidoEnvioML(data_atualizacao=datetime.now(), **shipping_data))
                     
                 print(f"ADICIONANDO VENDA {order['id']} - {len(order['order_items'])} ITEM(S)")
                 session.add(PedidoML(data_atualizacao=datetime.now(), **data))
             else:
                 print(f"ATUALIZANDO VENDA {order['id']} - {len(order['order_items'])} ITEM(S)")
                 pedido.update(data)
+                print(shipping_data)
+                session.query(PedidoEnvioML).filter(shipping_id=data['shipping_id']).update(shipping_data)
 
                 if len(order['payments']) > 0: 
                     for payment in order['payments']:
@@ -139,7 +179,7 @@ def download_order(order_api, api_offset):
 def get_orders(client_id, token):
     order = Orders(client_id, token)
     ml = download_order(order, 0)
-    return ml
+    print(ml)
     # download_shipping(order, 0)
     # download_payments(order, 0)
     # download_devolutions(order, 0)

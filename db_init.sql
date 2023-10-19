@@ -1,3 +1,4 @@
+ALTER TABLE loja_mercado_livre ADD ml_order_id timestamp NULL DEFAULT CURRENT_TIMESTAMP;
 DROP TABLE db_analize.pedidos_pagamentos_mercado_livre;
 DROP TABLE db_analize.pedidos_itens_mercado_livre;
 DROP TABLE db_analize.pedidos_mercado_livre;
@@ -118,7 +119,7 @@ CREATE TABLE IF NOT EXISTS `pedidos_envios_mercado_livre` (
     `mode` VARCHAR(45) NOT NULL,
     `order_cost` DECIMAL(4, 2),
     `priority_class` VARCHAR(45) NULL,
-    `service_id` VARCHAR(45) NOT NULL,
+    `service_id` VARCHAR(45) NULL,
     `tracking_number` VARCHAR(45) NOT NULL,
     `shipping_id` VARCHAR(255) NOT NULL,
     `tracking_method` VARCHAR(45) NOT NULL,

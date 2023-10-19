@@ -21,5 +21,6 @@ LojaML = Base.classes.loja_mercado_livre
 PedidoML = Base.classes.pedidos_mercado_livre
 PedidoItemML = Base.classes.pedidos_itens_mercado_livre
 PedidoPgtoML = Base.classes.pedidos_pagamentos_mercado_livre
+PedidoEnvioML = Base.classes.pedidos_envios_mercado_livre
 
 session = Session(engine)
