@@ -6,4 +6,4 @@ stores = session.query(LojaML).all()
 
 for store in stores:
     pedidos = get_orders(store.user_id, store.access_token)
-    print(pedidos)
+    

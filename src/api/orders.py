@@ -30,9 +30,6 @@ class Orders():
         }
         url = f'{self.api_orders}/archived'
         
-        print(params); 
-        print(url); 
-        
         response = requests.get(url, headers=self.headers, params=urlencode(params))
         return response.json() if response else response.status_code
 
@@ -49,8 +46,11 @@ class Orders():
     def products():
         pass
 
-    def shipping(self):
-        pass
+    def shipping(self, shipment_id):
+        url = f'https://api.mercadolibre.com/shipments/{shipment_id}'
+        
+        response = requests.get(url, headers=self.headers)
+        return response.json() if response else response.status_code
 
     def payments():
         pass

@@ -23,21 +23,3 @@ PedidoItemML = Base.classes.pedidos_itens_mercado_livre
 PedidoPgtoML = Base.classes.pedidos_pagamentos_mercado_livre
 
 session = Session(engine)
-
-""" data = {
-    'nome': 'GB Acessórios',
-    'access_token': 'APP_USR-2210627771816477-101616-e7a359fa090c679e38908735240746ed-495487925',
-    'user_id': '495487925',
-    'refresh_token': 'TG-652da02608ac36000195f041-495487925'
-}
-
-loja = session.query(LojaML).filter(LojaML.user_id == data['user_id'])
-
-if loja.count() > 0:
-    info = loja.update(data)
-else:
-    info = session.add(LojaML(**data))
-
-session.commit()
-
-print(info) """
