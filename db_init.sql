@@ -1,4 +1,4 @@
-ALTER TABLE loja_mercado_livre ADD ml_order_id timestamp NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE loja_mercado_livre ADD last_updated timestamp NULL DEFAULT CURRENT_TIMESTAMP;
 DROP TABLE db_analize.pedidos_pagamentos_mercado_livre;
 DROP TABLE db_analize.pedidos_itens_mercado_livre;
 DROP TABLE db_analize.pedidos_mercado_livre;
