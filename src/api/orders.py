@@ -10,30 +10,36 @@ class Orders():
         self.token = token
         self.headers = {'Authorization': f'Bearer {self.token}', }
 
-    def orders_period(self, date_start, date_end):
+    def orders_period(self, date_start, date_end, offset=0):
         params = {
             'seller': self.client_id,
             'order.date_created.from': date_start,
             'order.date_created.to': date_end,
-            'order.status': 'paid'
+            'order.status': 'paid',
+            'offset': offset
         }
         url = {self.api_orders}
         
         response = requests.get(url, headers=self.headers, params=urlencode(params))
         return response.json() if response else response.status_code
 
-    def archived_orders(self):
+    def archived_orders(self, offset=0):
         params = {
-            'seller': self.client_id
+            'seller': self.client_id,
+            'offset': offset
         }
         url = f'{self.api_orders}/archived'
+        
+        print(params); 
+        print(url); 
         
         response = requests.get(url, headers=self.headers, params=urlencode(params))
         return response.json() if response else response.status_code
 
-    def recents_orders(self):
+    def recents_orders(self, offset=0):
         params = {
-            'seller': self.client_id
+            'seller': self.client_id,
+            'offset': offset
         }
         url = f'{self.api_orders}/recent'
 
