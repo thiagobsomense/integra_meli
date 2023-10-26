@@ -221,7 +221,7 @@ async def get_orders(order_api, user_id):
                             await update_payments(session, order)
                             # print(f"update venda {order['id']}")
             else:
-                return orders
+                print(orders)
 
         await session.commit()
     logger.info('Registro concluído', extra={'user_id': user_id, 'init_at': init_at, 'end_at': datetime.now()})
