@@ -26,5 +26,9 @@ PedidoItemML = Base.classes.ml_pedidos_itens
 PedidoPgtoML = Base.classes.ml_pedidos_pagamentos
 PedidoEnvioML = Base.classes.ml_pedidos_envios
 PedidoDevolucaoML = Base.classes.ml_pedidos_devolucao
+LogsML = Base.classes.ml_logs
 
-async_session = AsyncSession(async_engine)
+try:
+    async_session = AsyncSession(async_engine)
+except Exception as e:
+    print(f'Não foi possível conectar ao banco de dados {e}')

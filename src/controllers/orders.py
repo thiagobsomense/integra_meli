@@ -1,12 +1,13 @@
+import time
 import aiohttp
 import asyncio
 from datetime import datetime, timedelta
 from math import floor, ceil
 from sqlalchemy import update, func
 from api.auth import Client
-from database.conn import async_session, LojaML, PedidoML, PedidoItemML, PedidoPgtoML, PedidoEnvioML
+from database.conn import *
 from database.orders import *
-import time
+from  config.logging import logger
 
 
 def download_order(order_api, api_offset):
@@ -188,9 +189,10 @@ def download_order(order_api, api_offset):
         download_order(order_api, new_offset)
 
 
-async def get_orders(order_api):
-    shipping_tasks = []
+async def get_orders(order_api, user_id):
+    init_at = datetime.now()
     start = time.time()
+    shipping_tasks = []
     async with async_session as session:
         async with aiohttp.ClientSession() as client_session:
             orders = await order_api.orders_period(client_session)
@@ -222,6 +224,7 @@ async def get_orders(order_api):
                 return orders
 
         await session.commit()
+    logger.info('Registro concluído', extra={'user_id': user_id, 'init_at': init_at, 'end_at': datetime.now()})
     print(f'tempo de verificação: {time.time() - start}')
     return shipping_tasks
 
@@ -313,6 +316,7 @@ async def get_claims(order_api):
 
 
 async def get_returns(order_api, user_id):
+    init_at = datetime.now()
     async with async_session as session:
         devolucoes = await session.execute(select(PedidoML).filter(PedidoML.user_id == str(user_id), PedidoML.claim_status == 'opened'))
         async with aiohttp.ClientSession() as client_session:
@@ -330,6 +334,7 @@ async def get_returns(order_api, user_id):
                     print(result)
 
             await session.commit()
+            logger.info('Testanddo aplicacação', extra={'user_id': user_id, 'init_at': init_at, 'end_at': datetime.now()})
 
 
 async def verify_access_token(store):

@@ -18,7 +18,7 @@ async def main():
         order = Orders(store.user_id, access_token)
 
         # if executor in ['all', 'orders']:
-        #     shippingOrError = await get_orders(order)
+        #     shippingOrError = await get_orders(order, store.user_id)
 
         # if executor in ['all', 'shipping']:
         #     executionByCron = shippingOrError if (isinstance(shippingOrError, list)) else []
