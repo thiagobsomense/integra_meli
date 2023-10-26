@@ -1,8 +1,12 @@
-from datetime import datetime
-from math import floor
-from sqlalchemy import func
-from api.orders import Orders
-from database import session, LojaML, PedidoML, PedidoItemML, PedidoPgtoML, PedidoEnvioML
+import aiohttp
+import asyncio
+from datetime import datetime, timedelta
+from math import floor, ceil
+from sqlalchemy import update, func
+from api.auth import Client
+from database.conn import async_session, LojaML, PedidoML, PedidoItemML, PedidoPgtoML, PedidoEnvioML
+from database.orders import *
+import time
 
 
 def download_order(order_api, api_offset):
@@ -24,7 +28,8 @@ def download_order(order_api, api_offset):
                 'paid_amount': order['paid_amount']
             }
 
-            pedido = session.query(PedidoML).filter(PedidoML.ml_order_id == func.binary(order['id']))
+            pedido = session.query(PedidoML).filter(
+                PedidoML.ml_order_id == func.binary(order['id']))
             if pedido.count() == 0:
                 seq_item = 1
 
@@ -57,7 +62,8 @@ def download_order(order_api, api_offset):
                     }
 
                     seq_item += 1
-                    session.add(PedidoItemML(data_atualizacao=datetime.now(), **item_data))
+                    session.add(PedidoItemML(
+                        data_atualizacao=datetime.now(), **item_data))
 
                 for payment in order['payments']:
                     payment_data = {
@@ -98,21 +104,22 @@ def download_order(order_api, api_offset):
                         'transaction_order_id': payment['transaction_order_id']
                     }
 
-                    session.add(PedidoPgtoML(data_atualizacao=datetime.now(), **payment_data))
+                    session.add(PedidoPgtoML(
+                        data_atualizacao=datetime.now(), **payment_data))
 
-                    shipping = order_api.shipping(data['shipping_id'])
+                    shipping = order_api.shipping(order['shipping']['id'])
                     shipping_data = {
-                        'user_id': shipping['sender_id'],
-                        'ml_order_id': shipping['order_id'],
-                        'substatus_history': None,
-                        'snapshot_packing': shipping['snapshot_packing'],
+                        'user_id': order['seller']['id'],
+                        'ml_order_id': order['id'],
+                        'substatus_history': None,  # convert to json
+                        'snapshot_packing':  None,  # convert to json
                         'receiver_id': shipping['receiver_id'],
-                        'base_cost': shipping['base_cost'],
+                        'base_cost': 0.0,
                         'type': shipping['type'],
-                        'return_details': shipping['return_details'],
+                        'return_details': None,  # convert to json
                         'sender_id': shipping['sender_id'],
                         'mode': shipping['mode'],
-                        'order_cost': None,
+                        'order_cost': 0.0,  # convert to json
                         'priority_class': shipping['priority_class'],
                         'service_id': shipping['service_id'],
                         'tracking_number': shipping['tracking_number'],
@@ -134,15 +141,21 @@ def download_order(order_api, api_offset):
                         'quotation': shipping['quotation'],
                         'status': shipping['status'],
                         'logistic_type': shipping['logistic_type']
+                        # adicionar shipping_items como json
+                        # adicionar cost_components como json
+
                     }
 
-                    # session.add(PedidoEnvioML(data_atualizacao=datetime.now(), **shipping_data))
-                    
-                print(f"ADICIONANDO VENDA {order['id']} - {len(order['order_items'])} ITEM(S)")
+                    session.add(PedidoEnvioML(
+                        data_atualizacao=datetime.now(), **shipping_data))
+
+                print(
+                    f"ADICIONANDO VENDA {order['id']} - {len(order['order_items'])} ITEM(S)")
                 session.add(PedidoML(data_atualizacao=datetime.now(), **data))
             else:
-                print(f"ATUALIZANDO VENDA {order['id']} - {len(order['order_items'])} ITEM(S)")
-                # pedido.update(data)
+                print(
+                    f"ATUALIZANDO VENDA {order['id']} - {len(order['order_items'])} ITEM(S)")
+                pedido.update(data)
                 # session.query(PedidoEnvioML).filter(shipping_id=data['shipping_id']).update(shipping_data)
 
                 """ if len(order['payments']) > 0: 
@@ -159,27 +172,199 @@ def download_order(order_api, api_offset):
 
                             payment_updated.update(payment_data) """
 
-        session.commit()
+        # session.commit()
     else:
         return orders
-    
+
     total = orders['paging']['total']
     offset = orders['paging']['offset']
     limit = orders['paging']['limit']
 
     max_pages = floor(total / limit)
     max_offset = max_pages * limit
-    new_offset = offset + limit if offset < max_offset else False        
+    new_offset = offset + limit if offset < max_offset else False
 
     if new_offset:
         download_order(order_api, new_offset)
 
 
-def get_orders(client_id, token):
-    order = Orders(client_id, token)
-    ml = download_order(order, 0)
-    print(ml)
-    # download_shipping(order, 0)
-    # download_payments(order, 0)
-    # download_devolutions(order, 0)
-    
+async def get_orders(order_api):
+    shipping_tasks = []
+    start = time.time()
+    async with async_session as session:
+        async with aiohttp.ClientSession() as client_session:
+            orders = await order_api.orders_period(client_session)
+
+            if isinstance(orders, dict):
+                offset = 0
+                total = orders['paging']['total']
+                limit = orders['paging']['limit']
+                max_pages = ceil(total / limit)
+
+                tasks = []
+                for page in range(0, max_pages):
+                    tasks.append(asyncio.ensure_future(
+                        order_api.orders_period(client_session, offset)))
+                    offset += limit
+
+                results = await asyncio.gather(*tasks)
+                for orders in results:
+                    for order in orders['results']:
+                        pedido = await create_or_update_order(session, order)
+                        if pedido == 'create':
+                            await add_items(session, order)
+                            await add_payments(session, order)
+                            shipping_tasks.append(order['shipping']['id'])
+                        else:
+                            await update_payments(session, order)
+                            # print(f"update venda {order['id']}")
+            else:
+                return orders
+
+        await session.commit()
+    print(f'tempo de verificação: {time.time() - start}')
+    return shipping_tasks
+
+
+async def get_shipping_from_orders(data, order):
+    start = time.time()
+    async with async_session as session:
+        async with aiohttp.ClientSession() as client_session:
+            tasks = []
+            for shipping in data:
+                tasks.append(asyncio.create_task(order.shipping(client_session, shipping)))
+
+            results = await asyncio.gather(*tasks)
+            for result in results:
+                await add_shipping(session, result)
+
+        await session.commit()
+    print(f'Tempo de execução: {time.time() - start}')
+
+    # SE: veio uma lista de array da order ele ja vai executar diretamente as promises salvas para cadastrar os shippings
+    # EXECUTA AS PROMISES E SALVA O RESULTADO
+
+
+def get_new_shipping(order):
+    # BUSCA NA BASE DE DADOS A LISTA DE SELLER ID QUE NÃO EXISTE NA TABELA DE SHIPPING PARA QUE A BUSCA E A ADIÇÃO SEJAM FEITAS
+    # - CREATE NON EXISTING SHIPPINGS:
+
+    # countResult = SELECT count(id) FROM orders WHERE seller_id = xxxx
+    # total = countResult
+    # offset = orders['paging']['offset']
+    # limit = orders['paging']['limit']
+    # max_pages = floor(total / limit)
+
+    # SELECT o.mlorder_id, o.shipping_id
+    # FROM orders o
+    # LEFT JOIN shipping s ON s.id = o.shipping_id
+    # WHERE s.id IS NULL
+    # AND o.seller_id = XXXX
+    # LIMIT $limit
+    # OFFSET $offset
+
+    # ADICIONA UM ARRAY DE PROMISES
+
+    # EXECUTA AS PROMISES E SALVA O RESULTADO
+    print(False)
+
+    pass
+
+
+def update_shipping(data, order):
+    # EXECUTA O UPDATE SHIPPING
+    # - UPDATE SHIPPINGS:
+
+    # SELECT id
+    # FROM shipping
+    # WHERE last_updated > (hoje - 30 dias)
+    # AND seller_id = XXXX
+    # AND created_at !== TODAY
+
+    # results_shipping = await asyncio.gather(*shipping_tasks)
+
+    print(False)
+
+    pass
+
+
+async def get_claims(order_api):
+    async with async_session as session:
+        async with aiohttp.ClientSession() as client_session:
+            claims = await order_api.claims(client_session)
+
+            if isinstance(claims, dict):
+                offset = 0
+                total = claims['paging']['total']
+                limit = claims['paging']['limit']
+                max_pages = ceil(total / limit)
+
+                tasks = []
+                for page in range(0, max_pages):
+                    tasks.append(asyncio.create_task(order_api.claims(client_session, offset)))
+                    offset += limit
+
+                results = await asyncio.gather(*tasks)
+                for result in results:
+                    for data in result['data']:
+                        await update_claim(session, data)
+
+        await session.commit()
+
+
+async def get_returns(order_api, user_id):
+    async with async_session as session:
+        devolucoes = await session.execute(select(PedidoML).filter(PedidoML.user_id == str(user_id), PedidoML.claim_status == 'opened'))
+        async with aiohttp.ClientSession() as client_session:
+            tasks, orders = [], []
+            for order in devolucoes.scalars().all():
+                tasks.append(asyncio.create_task(order_api.returns(client_session, order.claim_id)))
+                orders.append({'claim_id':  order.claim_id,  'order_id': order.ml_order_id, 'user_id': order.user_id})
+
+            results = await asyncio.gather(*tasks)
+            for result in results:
+                if isinstance(result, dict):
+                    order = [x for x in orders if x['claim_id'] == str(result['claim_id'])][0]
+                    await create_or_update_returns(session, order, result)
+                else:
+                    print(result)
+
+            await session.commit()
+
+
+async def verify_access_token(store):
+
+    async with async_session as session:
+        store_id = store.user_id
+        token = store.access_token
+        date_expire = store.last_updated + timedelta(seconds=int(store.expires_in))
+
+        if date_expire < datetime.now():
+            client_id = '2210627771816477'
+            client_secret = 'kwEqWEwXFVUv6i3P6COsp1H8IGqiZube'
+
+            client = Client(client_id, client_secret)
+            new_token = client.new_token(refresh_token=store.refresh_token)
+
+            token = new_token['access_token']
+            expires_in = new_token['expires_in']
+            refresh_token = new_token['refresh_token']
+
+            data = {'access_token': token, 'expires_in': expires_in,
+                    'refresh_token': refresh_token, 'last_updated': datetime.now()}
+
+            if new_token:
+                await session.execute(update(LojaML).where(LojaML.user_id == str(store_id)).values(data))
+                await session.commit()
+
+        return token
+
+
+async def get_shipping(data, order):
+    if isinstance(data, list) and len(data) > 0:
+        ml = await get_shipping_from_orders(data, order)
+        return ml
+
+    # asyncio.run(get_new_shipping(order))
+
+    # asyncio.run(update_shipping(order))

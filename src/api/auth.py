@@ -90,3 +90,21 @@ class Client(object):
 
         response = requests.post(url, headers=headers, data=urlencode(params))
         return response.json()
+
+
+    def new_token(self, refresh_token):
+        params = {
+            'grant_type': 'refresh_token',
+            'client_id': self.client_id,
+            'client_secret': self.client_secret,
+            'refresh_token': refresh_token,
+        }
+        url = f'{self.api_url}/oauth/token'
+
+        headers = {
+            'accept': 'application/json',
+            'content-type': 'application/x-www-form-urlencoded'
+        }
+
+        response = requests.post(url, headers=headers, data=urlencode(params))
+        return response.json()

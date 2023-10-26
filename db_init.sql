@@ -1,10 +1,19 @@
-ALTER TABLE loja_mercado_livre ADD last_updated timestamp NULL DEFAULT CURRENT_TIMESTAMP;
-DROP TABLE db_analize.pedidos_pagamentos_mercado_livre;
-DROP TABLE db_analize.pedidos_itens_mercado_livre;
-DROP TABLE db_analize.pedidos_mercado_livre;
+RENAME TABLE db_analize.loja_mercado_livre TO db_analize.ml_loja;
+--ALTER TABLE ml_loja ADD last_updated timestamp NULL DEFAULT CURRENT_TIMESTAMP;
 
-CREATE TABLE IF NOT EXISTS `pedidos_mercado_livre` (
-  `id` INT NOT NULL AUTO_INCREMENT,
+DROP TABLE IF EXISTS db_analize.pedidos_pagamentos_mercado_livre;
+DROP TABLE IF EXISTS db_analize.pedidos_itens_mercado_livre;
+DROP TABLE IF EXISTS db_analize.pedidos_envios_mercado_livre;
+DROP TABLE IF EXISTS db_analize.pedidos_mercado_livre;
+
+DROP TABLE IF EXISTS db_analize.ml_pedidos_pagamentos;
+DROP TABLE IF EXISTS db_analize.ml_pedidos_itens;
+DROP TABLE IF EXISTS db_analize.ml_pedidos_envios;
+DROP TABLE IF EXISTS db_analize.ml_pedidos;
+DROP TABLE IF EXISTS db_analize.ml_pedidos_devolucao;
+
+CREATE TABLE IF NOT EXISTS `ml_pedidos` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` varchar(255) NOT NULL,
   `ml_order_id` varchar(255) NOT NULL UNIQUE,
   `fulfilled` tinyint(1) DEFAULT NULL,
@@ -19,14 +28,18 @@ CREATE TABLE IF NOT EXISTS `pedidos_mercado_livre` (
   `paid_amount` decimal(10,2) DEFAULT NULL,
   `data_atualizacao` timestamp NULL DEFAULT NULL,
   `data_insercao` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `claim_id` varchar(255) NULL DEFAULT NULL,
+  `claim_status` varchar(45) NULL DEFAULT NULL,
+  `claim_last_updated` timestamp NULL DEFAULT NULL,
+  `claim_resource_type` varchar(255) NULL DEFAULT NULL,
+  `payment_id` varchar(255) NULL DEFAULT NULL,
   PRIMARY KEY (`id`, `user_id`, `ml_order_id`),
-  CONSTRAINT `pedidos_mercado_livre_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `loja_mercado_livre` (`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   UNIQUE INDEX `ml_order_id_UNIQUE` (`ml_order_id` ASC) VISIBLE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 
-CREATE TABLE IF NOT EXISTS `pedidos_itens_mercado_livre` (
-  `id` INT NOT NULL AUTO_INCREMENT,
+CREATE TABLE IF NOT EXISTS `ml_pedidos_itens` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` varchar(255) NOT NULL,
   `ml_order_id` varchar(255) NOT NULL,
   `seq` int NOT NULL,
@@ -53,14 +66,12 @@ CREATE TABLE IF NOT EXISTS `pedidos_itens_mercado_livre` (
   `element_id` varchar(255) DEFAULT NULL,
   `data_atualizacao` timestamp NULL DEFAULT NULL,
   `data_insercao` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`, `user_id`, `ml_order_id`),
-  CONSTRAINT `pedidos_itens_mercado_livre_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `pedidos_mercado_livre` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `pedidos_itens_mercado_livre_ibfk_2` FOREIGN KEY (`ml_order_id`) REFERENCES `pedidos_mercado_livre` (`ml_order_id`) ON DELETE CASCADE ON UPDATE CASCADE
+  PRIMARY KEY (`id`, `user_id`, `ml_order_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 
-CREATE TABLE IF NOT EXISTS `pedidos_pagamentos_mercado_livre` (
-  `id` INT NOT NULL AUTO_INCREMENT,
+CREATE TABLE IF NOT EXISTS `ml_pedidos_pagamentos` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` varchar(255) NOT NULL,
   `ml_order_id` varchar(255) NOT NULL,
   `payment_id` varchar(255) NOT NULL,
@@ -92,39 +103,39 @@ CREATE TABLE IF NOT EXISTS `pedidos_pagamentos_mercado_livre` (
   `atm_transfer_reference_transaction_id` varchar(255) DEFAULT NULL,
   `atm_transfer_reference_company_id` varchar(255) DEFAULT NULL,
   `site_id` varchar(255) DEFAULT NULL,
-  `payer_id` bigint DEFAULT NULL,
-  `order_id` bigint DEFAULT NULL,
+  `payer_id` varchar(255) DEFAULT NULL,
+  `order_id` varchar(255) DEFAULT NULL,
   `currency_id` varchar(255) DEFAULT NULL,
   `status` varchar(255) DEFAULT NULL,
   `transaction_order_id` varchar(255) DEFAULT NULL,
   `data_atualizacao` timestamp NULL DEFAULT NULL,
   `data_insercao` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`, `user_id`,`ml_order_id`),
-  CONSTRAINT `pedidos_pagamentos_mercado_livre_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `pedidos_mercado_livre` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `pedidos_pagamentos_mercado_livre_ibfk_2` FOREIGN KEY (`ml_order_id`) REFERENCES `pedidos_mercado_livre` (`ml_order_id`) ON DELETE CASCADE ON UPDATE CASCADE
+  PRIMARY KEY (`id`, `user_id`,`ml_order_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 
-CREATE TABLE IF NOT EXISTS `pedidos_envios_mercado_livre` (
-	`id` INT NOT NULL AUTO_INCREMENT,
+CREATE TABLE IF NOT EXISTS `ml_pedidos_envios` (
+	`id` BIGINT NOT NULL AUTO_INCREMENT,
     `user_id` VARCHAR(255) NOT NULL,
 	`ml_order_id` VARCHAR(255) NOT NULL,
-    `substatus_history` VARCHAR(255) NULL,
-    `snapshot_packing` VARCHAR(45) NULL,
-    `receiver_id` VARCHAR(255) NOT NULL,
-    `base_cost` DECIMAL(4, 2),
-    `type` VARCHAR(45) NOT NULL,
-    `return_details` VARCHAR(45) NULL,
+    `substatus_history_json` TEXT NULL,
+    `snapshot_packing_json` TEXT NULL,
+    `receiver_id` VARCHAR(255) NULL,
+    `base_cost` DECIMAL(10,2),
+    `cost_components_json` TEXT NULL,
+    `type` VARCHAR(45) NULL,
+    `return_details_json` TEXT NULL,
     `sender_id` VARCHAR(255) NOT NULL,
-    `mode` VARCHAR(45) NOT NULL,
-    `order_cost` DECIMAL(4, 2),
-    `priority_class` VARCHAR(45) NULL,
+    `mode` VARCHAR(45) NULL,
+    `order_cost` DECIMAL(10,2),
+    `priority_class_json` TEXT NULL,
     `service_id` VARCHAR(45) NULL,
-    `tracking_number` VARCHAR(45) NOT NULL,
+    `tracking_number` VARCHAR(45) NULL,
     `shipping_id` VARCHAR(255) NOT NULL,
-    `tracking_method` VARCHAR(45) NOT NULL,
+    `shipping_items_json` TEXT NULL,
+    `tracking_method` VARCHAR(45) NULL,
     `last_updated` timestamp NULL DEFAULT NULL,
-    `items_types` VARCHAR(255) NULL,
+    `items_types_json` TEXT NULL,
     `comments` VARCHAR(255) NULL,
     `substatus` VARCHAR(255) NULL,
     `date_created` timestamp NULL DEFAULT NULL,
@@ -132,7 +143,7 @@ CREATE TABLE IF NOT EXISTS `pedidos_envios_mercado_livre` (
     `created_by` VARCHAR(45) NULL,
     `application_id` VARCHAR(45) NULL,
     `return_tracking_number` VARCHAR(45) NULL,
-    `site_id` VARCHAR(45) NOT NULL,
+    `site_id` VARCHAR(45) NULL,
     `carrier_info` VARCHAR(45) NULL,
     `market_place` VARCHAR(45) NULL,
     `customer_id` VARCHAR(45) NULL,
@@ -141,7 +152,38 @@ CREATE TABLE IF NOT EXISTS `pedidos_envios_mercado_livre` (
     `logistic_type` VARCHAR(255) null,
     `data_atualizacao` timestamp NULL DEFAULT NULL,
   	`data_insercao` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  	PRIMARY KEY (`id`, `user_id`,`ml_order_id`),
-  	CONSTRAINT `pedidos_envios_mercado_livre_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `pedidos_mercado_livre` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  	CONSTRAINT `pedidos_envios_mercado_livre_ibfk_2` FOREIGN KEY (`ml_order_id`) REFERENCES `pedidos_mercado_livre` (`ml_order_id`) ON DELETE CASCADE ON UPDATE CASCADE
+  	PRIMARY KEY (`id`, `user_id`,`ml_order_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+CREATE TABLE IF NOT EXISTS `ml_pedidos_devolucao` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` VARCHAR(255) NOT NULL,
+  `ml_order_id` VARCHAR(255) NOT NULL,
+  `resource_id` VARCHAR(45) NULL,
+  `resource` VARCHAR(45) NULL,
+  `claim_id` VARCHAR(45) NULL,
+  `status` VARCHAR(45) NULL,
+  `type` VARCHAR(45) NULL,
+  `subtype` VARCHAR(45) NULL,
+  `status_money` VARCHAR(45) NULL,
+  `refund_at` VARCHAR(45) NULL,
+  `shipping_json` TEXT NULL,
+  `warehouse_review_json` TEXT NULL,
+  `date_created` VARCHAR(45) NULL,
+  `last_updated` VARCHAR(45) NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+CREATE TABLE IF NOT EXISTS `ml_logs` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(255) NOT NULL,
+  `step` VARCHAR(255) NOT NULL,
+  `status` VARCHAR(255) NOT NULL,
+  `init_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `end_at` DATETIME NULL,
+  `message` VARCHAR(255) NULL,
+  `body` TEXT NULL,
+  `solved` TINYINT NULL,
+  `solved_at` DATETIME NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;

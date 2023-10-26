@@ -1,5 +1,6 @@
 import requests
 from urllib.parse import urlencode
+from datetime import datetime, timedelta
 
 
 class Orders():
@@ -10,47 +11,77 @@ class Orders():
         self.token = token
         self.headers = {'Authorization': f'Bearer {self.token}', }
 
-    def orders_period(self, date_start, date_end, offset=0):
+    async def orders_period(self, session, offset=0):
+        # TODO verificar formtado de data e deixa-la dinamica
+        now = datetime.now()
+        formatted_to = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        subtract_day = now - timedelta(days=750)
+        formatted_from = subtract_day.strftime("%Y-%m-%dT%H:%M:%SZ")
+
         params = {
             'seller': self.client_id,
-            'order.date_created.from': date_start,
-            'order.date_created.to': date_end,
+            'order.date_last_updated.from': formatted_from,
+            'order.date_last_updated.to': formatted_to,
             'order.status': 'paid',
             'offset': offset
         }
-        url = {self.api_orders}
-        
-        response = requests.get(url, headers=self.headers, params=urlencode(params))
-        return response.json() if response else response.status_code
+        url = self.api_orders
 
-    def archived_orders(self, offset=0):
+        async with session.get(url, headers=self.headers, params=params) as response:
+            resp = await response.json() if response.status == 200 else response.status
+            return resp
+
+    async def archived_orders(self, session, offset=0):
         params = {
             'seller': self.client_id,
             'offset': offset
         }
         url = f'{self.api_orders}/archived'
-        
-        response = requests.get(url, headers=self.headers, params=urlencode(params))
-        return response.json() if response else response.status_code
 
-    def recents_orders(self, offset=0):
+        async with session.get(url, headers=self.headers, params=params) as response:
+            resp = await response.json() if response.status == 200 else response.status
+            return resp
+
+    async def recents_orders(self, session, offset=0):
         params = {
             'seller': self.client_id,
             'offset': offset
         }
         url = f'{self.api_orders}/recent'
-
-        response = requests.get(url, headers=self.headers, params=urlencode(params))
-        return response.json() if response else response.status_code
+        async with session.get(url, headers=self.headers, params=params) as response:
+            resp = await response.json() if response.status == 200 else response.status
+            return resp
 
     def products():
         pass
 
-    def shipping(self, shipment_id):
+    async def shipping(self, session, shipment_id):
         url = f'https://api.mercadolibre.com/shipments/{shipment_id}'
-        
-        response = requests.get(url, headers=self.headers)
-        return response.json() if response else response.status_code
+
+        async with session.get(url, headers=self.headers) as response:
+            resp = await response.json() if response.status == 200 else response.status
+            return resp
 
     def payments():
         pass
+
+    async def claims(self, session, offset=0):
+        params = {
+            'status': 'opened',
+            # 'type': 'return',
+            'sort': 'last_updated:desc',
+            'offset': offset
+        }
+        url = f'https://api.mercadolibre.com/v1/claims/search'
+
+        async with session.get(url, headers=self.headers, params=params) as response:
+            resp = await response.json() if response.status == 200 else response.status
+            return resp
+
+    async def returns(self, session, claim_id):
+        url = f'https://api.mercadolibre.com/v2/claims/{claim_id}/returns'
+
+        async with session.get(url, headers=self.headers) as response:
+            resp = await response.json() if response.status == 200 else response.status
+            return resp
