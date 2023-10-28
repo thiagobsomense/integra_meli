@@ -2,9 +2,6 @@ import aiohttp
 import asyncio
 from datetime import datetime, timedelta
 from math import ceil
-from sqlalchemy import update
-from decouple import config
-from api.auth import Client
 from database.conn import *
 from database.orders import *
 from  config.logging import logger
