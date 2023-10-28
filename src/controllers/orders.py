@@ -1,16 +1,16 @@
-import time
 import aiohttp
 import asyncio
 from datetime import datetime, timedelta
-from math import floor, ceil
-from sqlalchemy import update, func
+from math import ceil
+from sqlalchemy import update
+from decouple import config
 from api.auth import Client
 from database.conn import *
 from database.orders import *
 from  config.logging import logger
 
 
-def download_order(order_api, api_offset):
+""" def download_order(order_api, api_offset):
     orders = order_api.archived_orders(api_offset)
 
     if isinstance(orders, dict):
@@ -157,9 +157,9 @@ def download_order(order_api, api_offset):
                 print(
                     f"ATUALIZANDO VENDA {order['id']} - {len(order['order_items'])} ITEM(S)")
                 pedido.update(data)
-                # session.query(PedidoEnvioML).filter(shipping_id=data['shipping_id']).update(shipping_data)
+                session.query(PedidoEnvioML).filter(shipping_id=data['shipping_id']).update(shipping_data)
 
-                """ if len(order['payments']) > 0: 
+                if len(order['payments']) > 0: 
                     for payment in order['payments']:
                         print(payment['id'])
                         payment_updated = session.query(PedidoPgtoML).filter(PedidoPgtoML.payment_id == func.binary(payment['id']))
@@ -171,9 +171,9 @@ def download_order(order_api, api_offset):
                                 'status': payment['status'],
                             }
 
-                            payment_updated.update(payment_data) """
+                            payment_updated.update(payment_data)
 
-        # session.commit()
+        session.commit()
     else:
         return orders
 
@@ -186,17 +186,18 @@ def download_order(order_api, api_offset):
     new_offset = offset + limit if offset < max_offset else False
 
     if new_offset:
-        download_order(order_api, new_offset)
+        download_order(order_api, new_offset) """
 
 
 async def get_orders(order_api, user_id):
     init_at = datetime.now()
-    start = time.time()
+    count_add = 0
+    count_update = 0
     shipping_tasks = []
+
     async with async_session as session:
         async with aiohttp.ClientSession() as client_session:
             orders = await order_api.orders_period(client_session)
-
             if isinstance(orders, dict):
                 offset = 0
                 total = orders['paging']['total']
@@ -205,8 +206,7 @@ async def get_orders(order_api, user_id):
 
                 tasks = []
                 for page in range(0, max_pages):
-                    tasks.append(asyncio.ensure_future(
-                        order_api.orders_period(client_session, offset)))
+                    tasks.append(asyncio.create_task(order_api.orders_period(client_session, offset)))
                     offset += limit
 
                 results = await asyncio.gather(*tasks)
@@ -217,20 +217,22 @@ async def get_orders(order_api, user_id):
                             await add_items(session, order)
                             await add_payments(session, order)
                             shipping_tasks.append(order['shipping']['id'])
+                            count_add += 1
                         else:
                             await update_payments(session, order)
-                            # print(f"update venda {order['id']}")
-            else:
-                print(orders)
+                        
+                        if pedido == 'update':
+                            count_update += 1
 
-        await session.commit()
-    logger.info('Registro concluído', extra={'user_id': user_id, 'init_at': init_at, 'end_at': datetime.now()})
-    print(f'tempo de verificação: {time.time() - start}')
+                await session.commit()
+                logger.info(f'Tarefa Concluída - {count_add} novos registros e {count_update} registros atualizados', extra={'user_id': user_id, 'init_at': init_at, 'end_at': datetime.now()})
+            else:
+                logger.warning(f'Erro na solicitação {orders}', extra={'user_id': user_id, 'init_at': init_at, 'end_at': datetime.now()})
+
     return shipping_tasks
 
 
-async def get_shipping_from_orders(data, order):
-    start = time.time()
+async def get_shipping(data, order):
     async with async_session as session:
         async with aiohttp.ClientSession() as client_session:
             tasks = []
@@ -242,13 +244,13 @@ async def get_shipping_from_orders(data, order):
                 await add_shipping(session, result)
 
         await session.commit()
-    print(f'Tempo de execução: {time.time() - start}')
 
-    # SE: veio uma lista de array da order ele ja vai executar diretamente as promises salvas para cadastrar os shippings
-    # EXECUTA AS PROMISES E SALVA O RESULTADO
+    # logger.info()
 
 
 def get_new_shipping(order):
+    # TODO(Feat): Verificar como realizar o New Shipping
+    
     # BUSCA NA BASE DE DADOS A LISTA DE SELLER ID QUE NÃO EXISTE NA TABELA DE SHIPPING PARA QUE A BUSCA E A ADIÇÃO SEJAM FEITAS
     # - CREATE NON EXISTING SHIPPINGS:
 
@@ -269,26 +271,29 @@ def get_new_shipping(order):
     # ADICIONA UM ARRAY DE PROMISES
 
     # EXECUTA AS PROMISES E SALVA O RESULTADO
-    print(False)
 
     pass
 
 
-def update_shipping(data, order):
-    # EXECUTA O UPDATE SHIPPING
-    # - UPDATE SHIPPINGS:
+# TODO(Fix): Melhorar desempenho desse processo
+async def update_shippings(order_api, user_id):
+    async with async_session as session:
+        today = datetime.now()
+        obj_data = today - timedelta(days=30)
+        data = await session.scalars(select(PedidoEnvioML).where(PedidoEnvioML.user_id == user_id, PedidoEnvioML.last_updated > obj_data, PedidoEnvioML.date_created != today))
+        
+        async with aiohttp.ClientSession() as client_session:
+            tasks = []
+            for shipping in data:
+                tasks.append(asyncio.create_task(order_api.shipping(client_session, shipping.shipping_id)))
 
-    # SELECT id
-    # FROM shipping
-    # WHERE last_updated > (hoje - 30 dias)
-    # AND seller_id = XXXX
-    # AND created_at !== TODAY
+            results = await asyncio.gather(*tasks)
+            for result in results:
+                await update_shipping(session, result)
 
-    # results_shipping = await asyncio.gather(*shipping_tasks)
+        await session.commit()
 
-    print(False)
-
-    pass
+    # logger.info()
 
 
 async def get_claims(order_api):
@@ -321,7 +326,7 @@ async def get_returns(order_api, user_id):
         devolucoes = await session.execute(select(PedidoML).filter(PedidoML.user_id == str(user_id), PedidoML.claim_status == 'opened'))
         async with aiohttp.ClientSession() as client_session:
             tasks, orders = [], []
-            for order in devolucoes.scalars().all():
+            for order in devolucoes.scalars():
                 tasks.append(asyncio.create_task(order_api.returns(client_session, order.claim_id)))
                 orders.append({'claim_id':  order.claim_id,  'order_id': order.ml_order_id, 'user_id': order.user_id})
 
@@ -345,31 +350,22 @@ async def verify_access_token(store):
         date_expire = store.last_updated + timedelta(seconds=int(store.expires_in))
 
         if date_expire < datetime.now():
-            client_id = '2210627771816477'
-            client_secret = 'kwEqWEwXFVUv6i3P6COsp1H8IGqiZube'
+            client_id = config('CLIENT_ID')
+            client_secret = config('CLIENT_SECRET')
 
             client = Client(client_id, client_secret)
             new_token = client.new_token(refresh_token=store.refresh_token)
+            
+            if not 'error' in new_token:
+                token = new_token['access_token']
+                expires_in = new_token['expires_in']
+                refresh_token = new_token['refresh_token']
 
-            token = new_token['access_token']
-            expires_in = new_token['expires_in']
-            refresh_token = new_token['refresh_token']
+                data = {'access_token': token, 'expires_in': expires_in,
+                        'refresh_token': refresh_token, 'last_updated': datetime.now()}
 
-            data = {'access_token': token, 'expires_in': expires_in,
-                    'refresh_token': refresh_token, 'last_updated': datetime.now()}
-
-            if new_token:
                 await session.execute(update(LojaML).where(LojaML.user_id == str(store_id)).values(data))
                 await session.commit()
-
+        
+        # log.wraning {'message': 'Error validating grant. Your authorization code or refresh token may be expired or it was already used', 'error': 'invalid_grant', 'status': 400, 'cause': []}
         return token
-
-
-async def get_shipping(data, order):
-    if isinstance(data, list) and len(data) > 0:
-        ml = await get_shipping_from_orders(data, order)
-        return ml
-
-    # asyncio.run(get_new_shipping(order))
-
-    # asyncio.run(update_shipping(order))

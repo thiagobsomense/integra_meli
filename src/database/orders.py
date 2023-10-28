@@ -40,14 +40,17 @@ async def update_order(session, order):
 
 
 async def create_or_update_order(session, order):
+    data_obj = datetime.strptime(order['last_updated'], "%Y-%m-%dT%H:%M:%S.%f%z")
+    data_obj = data_obj.replace(tzinfo=None)
     pedido = await session.execute(select(PedidoML).filter(PedidoML.ml_order_id == str(order['id'])))
-    last_updated = datetime.fromisoformat(order['last_updated'])
     if len(pedido.fetchall()) == 0:
         await add_order(session, order)
         return 'create'
     else:
-        await update_order(session, order)
-        return 'update'
+        for x in pedido.scalars():
+            if x.last_updated < data_obj:
+                await update_order(session, order)
+                return 'update'
 
 
 async def add_items(session, order):
@@ -125,16 +128,18 @@ async def add_payments(session, order):
             'transaction_order_id': payment['transaction_order_id']
         }
 
-        session.add(PedidoPgtoML(
-            data_atualizacao=datetime.now(), **payment_data))
+        session.add(PedidoPgtoML(data_atualizacao=datetime.now(), **payment_data))
 
 
 async def update_payments(session, order):
+    # TODO(Fix): melhorar filtro de pagamento utilizando date_last_modified
     for payment in order['payments']:
         data = {
             'status_code': payment['status_code'],
             'status_detail': payment['status_detail'],
             'status': payment['status'],
+            'date_last_modified': payment['date_last_modified'],
+            'data_atualizacao': datetime.now()
         }
 
         await session.execute(update(PedidoPgtoML).where(PedidoPgtoML.payment_id == str(payment['id'])).values(data))
@@ -179,6 +184,18 @@ async def add_shipping(session, data):
     }
 
     session.add(PedidoEnvioML(data_atualizacao=datetime.now(), **shipping_data))
+
+
+async def update_shipping(session, result):
+    data = {
+        'substatus_history_json': json.dumps(result['substatus_history']),
+        'return_details_json': json.dumps(result['return_details']),
+        'last_updated': result['last_updated'],
+        'status': result['status'],
+        'data_atualizacao': datetime.now()
+    }
+
+    await session.execute(update(PedidoEnvioML).where(PedidoEnvioML.shipping_id == str(result['id'])).values(data))
 
 
 async def update_claim(session, claim):

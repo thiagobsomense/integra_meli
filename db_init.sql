@@ -155,6 +155,7 @@ CREATE TABLE IF NOT EXISTS `ml_pedidos_envios` (
   	PRIMARY KEY (`id`, `user_id`,`ml_order_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
+
 CREATE TABLE IF NOT EXISTS `ml_pedidos_devolucao` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` VARCHAR(255) NOT NULL,
@@ -174,6 +175,7 @@ CREATE TABLE IF NOT EXISTS `ml_pedidos_devolucao` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
+
 CREATE TABLE IF NOT EXISTS `ml_logs` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` varchar(255) NOT NULL,
@@ -185,5 +187,159 @@ CREATE TABLE IF NOT EXISTS `ml_logs` (
   `body` TEXT NULL,
   `solved` TINYINT NULL,
   `solved_at` DATETIME NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+
+CREATE TABLE IF NOT EXISTS `ml_faturamento_periodos` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(255) NOT NULL,
+  `key` varchar(20) NOT NULL,
+  `amount` DECIMAL(20,2) NOT NULL,
+  `unpaid_amount` DECIMAL(20,2),
+  `period_date_from` DATE NULL,
+  `period_date_to` DATE NULL,
+  `expiration_date` DATE NULL,
+  `debt_expiration_date` DATE NULL,
+  `debt_expiration_date_move_reason` DATE NULL,
+  `debt_expiration_date_move_reason_description` DATE NULL,
+  `period_status` varchar(100) NOT NULL,
+  `data_atualizacao` timestamp NULL DEFAULT NULL,
+  `data_insercao` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+
+CREATE TABLE IF NOT EXISTS `ml_faturamento_documentos` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(255) NOT NULL,
+  `document_id` varchar(255) NOT NULL,
+  `document_type` varchar(20) NULL,
+  `associated_document_id` varchar(255) NULL,
+  `expiration_date` DATE NULL,
+  `amount` DECIMAL(20,2) NOT NULL,
+  `unpaid_amount` DECIMAL(20,2),
+  `document_status` varchar(20) NULL,
+  `site_id` varchar(20) NULL,
+  `period_date_from` DATE NULL,
+  `period_date_to` DATE NULL,
+  `currency_id` varchar(20) NULL,
+  `count_details` varchar(20) NULL,
+  `files_json` TEXT NULL,
+  `data_atualizacao` timestamp NULL DEFAULT NULL,
+  `data_insercao` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+
+CREATE TABLE IF NOT EXISTS `ml_faturamento_resumo` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(255) NOT NULL,
+  `period_date_from` DATE NULL,
+  `period_date_to` DATE NULL,
+  `expiration_date` DATE NULL,
+  `amount` DECIMAL(20,2) NOT NULL,
+  `credit_note` DECIMAL(20,2),
+  `tax` DECIMAL(20,2),
+  `bonuses_json` TEXT NULL,
+  `charges_json` TEXT NULL,
+  `data_atualizacao` timestamp NULL DEFAULT NULL,
+  `data_insercao` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+
+CREATE TABLE IF NOT EXISTS `ml_faturamento_detalhes` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(255) NOT NULL,
+  `legal_document_number` varchar(255) NULL,
+  `legal_document_status` varchar(45) NULL,
+  `legal_document_status_description` varchar(150) NULL,
+  `creation_date_time` timestamp NULL DEFAULT NULL,
+  `detail_id` varchar(255) NULL,
+  `transaction_detail` varchar(255) NULL,
+  `debited_from_operation` varchar(20) NULL,
+  `debited_from_operation_description` varchar(20) NULL,
+  `status` varchar(100) NULL,
+  `status_description` varchar(255) NULL,
+  `charge_bonified_id` varchar(255) NULL,
+  `detail_amount` DECIMAL(20,2) NOT NULL,
+  `detail_type` varchar(45) NULL,
+  `detail_sub_type` varchar(45) NULL,
+  `charge_amount_without_discount` DECIMAL(20,2) NOT NULL,
+  `discount_amount` DECIMAL(20,2) NOT NULL,
+  `discount_reason` varchar(255) NULL,
+  `sales_info_json` TEXT NULL,
+  `shipping_id` varchar(255) NULL,
+  `pack_id` varchar(100) NULL,
+  `receiver_shipping_cost` DECIMAL(20,2) NOT NULL,
+  `items_info_json` TEXT NULL,
+  `document_id` varchar(255) NULL,
+  `marketplace` varchar(255) NULL,
+  `currency_id` varchar(45) NULL,
+  `data_atualizacao` timestamp NULL DEFAULT NULL,
+  `data_insercao` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+
+CREATE TABLE IF NOT EXISTS `ml_faturamento_garantias` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(255) NOT NULL,
+  `legal_document_number` varchar(255) NULL,
+  `legal_document_status` varchar(45) NULL,
+  `legal_document_status_description` varchar(150) NULL,
+  `creation_date_time` timestamp NULL DEFAULT NULL,
+  `detail_id` varchar(255) NULL,
+  `transaction_detail` varchar(255) NULL,
+  `status` varchar(100) NULL,
+  `status_description` varchar(255) NULL,
+  `charge_bonified_id` varchar(255) NULL,
+  `detail_type` varchar(45) NULL,
+  `detail_sub_type` varchar(45) NULL,
+  `concept_type` varchar(100) NULL,
+  `warranty_info_json` TEXT NULL,
+  `prepaid_info_json` TEXT NULL,
+  `document_id` varchar(255) NULL,
+  `data_atualizacao` timestamp NULL DEFAULT NULL,
+  `data_insercao` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+
+CREATE TABLE IF NOT EXISTS `ml_faturamento_logistica_full` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(255) NOT NULL,
+  `legal_document_number` varchar(255) NULL,
+  `legal_document_status` varchar(45) NULL,
+  `legal_document_status_description` varchar(150) NULL,
+  `creation_date_time` timestamp NULL DEFAULT NULL,
+  `detail_id` varchar(255) NULL,
+  `detail_amount` decimal(20,2) NULL,
+  `transaction_detail` varchar(255) NULL,
+  `charge_bonified_id` varchar(255) NULL,
+  `detail_type` varchar(45) NULL,
+  `detail_sub_type` varchar(45) NULL,
+  `concept_type` varchar(100) NULL,
+  `payment_id` varchar(255) NULL,
+  `type` varchar(45) NOT NULL,
+  `amount_per_unit` DECIMAL(20,2),
+  `amount` DECIMAL(20,2),
+  `sku` varchar(255) NULL,
+  `ean` varchar(255) NULL,
+  `item_id` varchar(255) NULL,
+  `item_title` varchar(255) NULL,
+  `variation` varchar(255) NULL,
+  `quantity` INT NULL,
+  `volume_type` varchar(255) NULL,
+  `inventory_id` varchar(255) NULL,
+  `inbound_id` varchar(255) NULL,
+  `volume_unit` varchar(10) NULL,
+  `amount_per_volume_unit` DECIMAL(20,2),
+  `volume` DECIMAL(20,5) NULL,
+  `volume_total` DECIMAL(20,5) NULL,
+  `document_id` varchar(255) NULL,
+  `data_atualizacao` timestamp NULL DEFAULT NULL,
+  `data_insercao` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;

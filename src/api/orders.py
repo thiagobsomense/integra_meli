@@ -1,5 +1,3 @@
-import requests
-from urllib.parse import urlencode
 from datetime import datetime, timedelta
 
 
@@ -12,11 +10,11 @@ class Orders():
         self.headers = {'Authorization': f'Bearer {self.token}', }
 
     async def orders_period(self, session, offset=0):
-        # TODO verificar formtado de data e deixa-la dinamica
+        # TODO(Fix): verificar formtado de data e deixa-la dinamica
         now = datetime.now()
         formatted_to = now.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        subtract_day = now - timedelta(days=750)
+        subtract_day = now - timedelta(days=30)
         formatted_from = subtract_day.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         params = {
