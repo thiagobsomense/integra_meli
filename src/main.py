@@ -2,6 +2,7 @@ import sys
 import asyncio
 from sqlalchemy import select
 from database.conn import async_session, LojaML
+from  controllers.utils import verify_access_token
 from controllers.orders import *
 from api.orders import Orders
 
@@ -24,8 +25,8 @@ async def main():
 
         if executor in ['all', 'orders']:
             shippingOrError = await get_orders(order, store.user_id)
-            executionByCron = shippingOrError if (isinstance(shippingOrError, list)) else []
-            await get_shipping(executionByCron, order)
+            shippingOrError = shippingOrError if (isinstance(shippingOrError, list)) else []
+            await get_shipping(shippingOrError, order)
 
         if executor in ['all', 'shipping']:
             await update_shippings(order, store.user_id)

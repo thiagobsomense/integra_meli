@@ -19,13 +19,18 @@ async_engine = create_async_engine(async_str_conn)
 Base = automap_base()
 Base.prepare(autoload_with=engine)
 
-# Clientes = Base.classes.clientes
 LojaML = Base.classes.ml_loja
 PedidoML = Base.classes.ml_pedidos
 PedidoItemML = Base.classes.ml_pedidos_itens
 PedidoPgtoML = Base.classes.ml_pedidos_pagamentos
 PedidoEnvioML = Base.classes.ml_pedidos_envios
 PedidoDevolucaoML = Base.classes.ml_pedidos_devolucao
+FatPeriodosML = Base.classes.ml_faturamento_periodos
+FatDocuemntosML = Base.classes.ml_faturamento_documentos
+FatResumoML = Base.classes.ml_faturamento_resumo
+FatDetalhesML = Base.classes.ml_faturamento_detalhes
+FatLogFullML = Base.classes.ml_faturamento_logistica_full
+FatGarantiasML = Base.classes.ml_faturamento_garantias
 LogsML = Base.classes.ml_logs
 
 try:
