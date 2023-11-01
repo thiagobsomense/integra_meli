@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
-from sqlalchemy import update
+from sqlalchemy import update, delete
 from decouple import config
 from api.auth import Client
 from database.conn import *
-from  config.logging import logger
+from config.logging import logger
 
 
 async def verify_access_token(store):
@@ -33,3 +33,10 @@ async def verify_access_token(store):
         
         # log.wraning {'message': 'Error validating grant. Your authorization code or refresh token may be expired or it was already used', 'error': 'invalid_grant', 'status': 400, 'cause': []}
         return token
+    
+
+async def clear_logs():
+    dt_delete = datetime.now() - timedelta(180)
+    async with async_session as session:
+        await session.execute(delete(LogsML).where(LogsML.init_at <= dt_delete))
+        await session.commit()

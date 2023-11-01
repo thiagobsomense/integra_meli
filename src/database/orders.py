@@ -201,9 +201,8 @@ async def update_shipping(session, result):
 async def update_claim(session, claim):
     data = {
         'claim_id': claim['id'],
-        'claim_last_updated': datetime.now(),
-        'claim_status': claim['status'],
-        'claim_resource_type': claim['resource']
+        'claim_last_updated': claim['last_updated'],
+        'claim_status': claim['status']
     }
 
     condition = ''
@@ -216,7 +215,7 @@ async def update_claim(session, claim):
             condition = PedidoML.payment_id
         case _:
             return
-
+  
     await session.execute(update(PedidoML).where(condition == str(claim['resource_id'])).values(data))
 
 

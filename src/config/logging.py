@@ -5,8 +5,8 @@ from database.conn import engine, LogsML
 
 try:
     session = Session(engine)
-except Exception as e:
-    print(f'Não foi possível conectar ao banco de dados {e}')
+except Exception as err:
+    print(f'Não foi possível conectar ao banco de dados. Erro: {err}')
 
 
 class CustomHandler(logging.StreamHandler):
@@ -19,6 +19,7 @@ class CustomHandler(logging.StreamHandler):
             values = {
                 'user_id': record.user_id,
                 'step': record.funcName,
+                'body': record.body,
                 'status': record.levelname,
                 'message': record.msg,
                 'init_at': record.init_at,

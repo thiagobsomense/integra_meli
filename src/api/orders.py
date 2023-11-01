@@ -1,3 +1,4 @@
+from decouple import config
 from datetime import datetime, timedelta
 
 
@@ -14,7 +15,7 @@ class Orders():
         now = datetime.now()
         formatted_to = now.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        subtract_day = now - timedelta(days=30)
+        subtract_day = now - timedelta(days=int(config('ORDER_RANGE')) or 30)
         formatted_from = subtract_day.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         params = {
@@ -68,7 +69,6 @@ class Orders():
         params = {
             'status': 'opened',
             # 'type': 'return',
-            'sort': 'last_updated:desc',
             'offset': offset
         }
         url = f'https://api.mercadolibre.com/v1/claims/search'
@@ -81,5 +81,12 @@ class Orders():
         url = f'https://api.mercadolibre.com/v2/claims/{claim_id}/returns'
 
         async with session.get(url, headers=self.headers) as response:
-            resp = await response.json() if response.status == 200 else response.status
-            return resp
+            # resp = await response.json() if response.status == 200 else response.status
+
+            obj = {
+                "status": response.status,
+                'claim_id': claim_id,
+                "response": await response.json()
+            }
+
+            return obj

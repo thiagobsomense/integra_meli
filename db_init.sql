@@ -1,5 +1,5 @@
 RENAME TABLE db_analize.loja_mercado_livre TO db_analize.ml_loja;
---ALTER TABLE ml_loja ADD last_updated timestamp NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE ml_loja ADD last_updated timestamp NULL DEFAULT CURRENT_TIMESTAMP;
 
 DROP TABLE IF EXISTS db_analize.pedidos_pagamentos_mercado_livre;
 DROP TABLE IF EXISTS db_analize.pedidos_itens_mercado_livre;
@@ -9,8 +9,14 @@ DROP TABLE IF EXISTS db_analize.pedidos_mercado_livre;
 DROP TABLE IF EXISTS db_analize.ml_pedidos_pagamentos;
 DROP TABLE IF EXISTS db_analize.ml_pedidos_itens;
 DROP TABLE IF EXISTS db_analize.ml_pedidos_envios;
-DROP TABLE IF EXISTS db_analize.ml_pedidos;
 DROP TABLE IF EXISTS db_analize.ml_pedidos_devolucao;
+DROP TABLE IF EXISTS db_analize.ml_pedidos;
+DROP TABLE IF EXISTS db_analize.ml_faturamento_periodos;
+DROP TABLE IF EXISTS db_analize.ml_faturamento_documentos;
+DROP TABLE IF EXISTS db_analize.ml_faturamento_resumo;
+DROP TABLE IF EXISTS db_analize.ml_faturamento_detalhes;
+DROP TABLE IF EXISTS db_analize.ml_faturamento_garantias;
+DROP TABLE IF EXISTS db_analize.ml_faturamento_logistica_full;
 
 CREATE TABLE IF NOT EXISTS `ml_pedidos` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
@@ -30,8 +36,10 @@ CREATE TABLE IF NOT EXISTS `ml_pedidos` (
   `data_insercao` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `claim_id` varchar(255) NULL DEFAULT NULL,
   `claim_status` varchar(45) NULL DEFAULT NULL,
+  `claim_try_number` int DEFAULT 0,
   `claim_last_updated` timestamp NULL DEFAULT NULL,
   `claim_resource_type` varchar(255) NULL DEFAULT NULL,
+  `claim_date_closed` timestamp NULL DEFAULT NULL,
   `payment_id` varchar(255) NULL DEFAULT NULL,
   PRIMARY KEY (`id`, `user_id`, `ml_order_id`),
   UNIQUE INDEX `ml_order_id_UNIQUE` (`ml_order_id` ASC) VISIBLE
@@ -176,25 +184,12 @@ CREATE TABLE IF NOT EXISTS `ml_pedidos_devolucao` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 
-CREATE TABLE IF NOT EXISTS `ml_logs` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `user_id` varchar(255) NOT NULL,
-  `step` VARCHAR(255) NOT NULL,
-  `status` VARCHAR(255) NOT NULL,
-  `init_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `end_at` DATETIME NULL,
-  `message` VARCHAR(255) NULL,
-  `body` TEXT NULL,
-  `solved` TINYINT NULL,
-  `solved_at` DATETIME NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
-
-
 CREATE TABLE IF NOT EXISTS `ml_faturamento_periodos` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` varchar(255) NOT NULL,
   `key` varchar(20) NOT NULL,
+  `group` varchar(20) NOT NULL,
+  `document_type` varchar(45) NOT NULL,
   `amount` DECIMAL(20,2) NOT NULL,
   `unpaid_amount` DECIMAL(20,2),
   `period_date_from` DATE NULL,
@@ -204,6 +199,11 @@ CREATE TABLE IF NOT EXISTS `ml_faturamento_periodos` (
   `debt_expiration_date_move_reason` DATE NULL,
   `debt_expiration_date_move_reason_description` DATE NULL,
   `period_status` varchar(100) NOT NULL,
+  `is_documents` TINYINT(1) DEFAULT 0, 
+  `is_summary` TINYINT(1) DEFAULT 0, 
+  `is_details` TINYINT(1) DEFAULT 0, 
+  `is_insurtech` TINYINT(1) DEFAULT 0, 
+  `is_fulfillment` TINYINT(1) DEFAULT 0, 
   `data_atualizacao` timestamp NULL DEFAULT NULL,
   `data_insercao` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
@@ -213,8 +213,10 @@ CREATE TABLE IF NOT EXISTS `ml_faturamento_periodos` (
 CREATE TABLE IF NOT EXISTS `ml_faturamento_documentos` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` varchar(255) NOT NULL,
-  `document_id` varchar(255) NOT NULL,
-  `document_type` varchar(20) NULL,
+  `key` varchar(20) NOT NULL,
+  `group` varchar(20) NOT NULL,
+  `document_type` varchar(45) NOT NULL,
+  `document_id` varchar(255) NULL,
   `associated_document_id` varchar(255) NULL,
   `expiration_date` DATE NULL,
   `amount` DECIMAL(20,2) NOT NULL,
@@ -235,6 +237,9 @@ CREATE TABLE IF NOT EXISTS `ml_faturamento_documentos` (
 CREATE TABLE IF NOT EXISTS `ml_faturamento_resumo` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` varchar(255) NOT NULL,
+  `key` varchar(20) NOT NULL,
+  `group` varchar(20) NOT NULL,
+  `document_type` varchar(45) NOT NULL,
   `period_date_from` DATE NULL,
   `period_date_to` DATE NULL,
   `expiration_date` DATE NULL,
@@ -252,6 +257,9 @@ CREATE TABLE IF NOT EXISTS `ml_faturamento_resumo` (
 CREATE TABLE IF NOT EXISTS `ml_faturamento_detalhes` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` varchar(255) NOT NULL,
+  `key` varchar(20) NOT NULL,
+  `group` varchar(20) NOT NULL,
+  `document_type` varchar(45) NOT NULL,
   `legal_document_number` varchar(255) NULL,
   `legal_document_status` varchar(45) NULL,
   `legal_document_status_description` varchar(150) NULL,
@@ -272,7 +280,7 @@ CREATE TABLE IF NOT EXISTS `ml_faturamento_detalhes` (
   `sales_info_json` TEXT NULL,
   `shipping_id` varchar(255) NULL,
   `pack_id` varchar(100) NULL,
-  `receiver_shipping_cost` DECIMAL(20,2) NOT NULL,
+  `receiver_shipping_cost` DECIMAL(20,2) DEFAULT '0.00',
   `items_info_json` TEXT NULL,
   `document_id` varchar(255) NULL,
   `marketplace` varchar(255) NULL,
@@ -286,6 +294,9 @@ CREATE TABLE IF NOT EXISTS `ml_faturamento_detalhes` (
 CREATE TABLE IF NOT EXISTS `ml_faturamento_garantias` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` varchar(255) NOT NULL,
+  `key` varchar(20) NOT NULL,
+  `group` varchar(20) NOT NULL,
+  `document_type` varchar(45) NOT NULL,
   `legal_document_number` varchar(255) NULL,
   `legal_document_status` varchar(45) NULL,
   `legal_document_status_description` varchar(150) NULL,
@@ -310,6 +321,9 @@ CREATE TABLE IF NOT EXISTS `ml_faturamento_garantias` (
 CREATE TABLE IF NOT EXISTS `ml_faturamento_logistica_full` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` varchar(255) NOT NULL,
+  `key` varchar(20) NOT NULL,
+  `group` varchar(20) NOT NULL,
+  `document_type` varchar(45) NOT NULL,
   `legal_document_number` varchar(255) NULL,
   `legal_document_status` varchar(45) NULL,
   `legal_document_status_description` varchar(150) NULL,
@@ -341,5 +355,20 @@ CREATE TABLE IF NOT EXISTS `ml_faturamento_logistica_full` (
   `document_id` varchar(255) NULL,
   `data_atualizacao` timestamp NULL DEFAULT NULL,
   `data_insercao` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+
+CREATE TABLE IF NOT EXISTS `ml_logs` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(255) NOT NULL,
+  `step` VARCHAR(255) NOT NULL,
+  `status` VARCHAR(255) NOT NULL,
+  `init_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `end_at` DATETIME NULL,
+  `message` VARCHAR(255) NULL,
+  `body` TEXT NULL,
+  `solved` TINYINT NULL,
+  `solved_at` DATETIME NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;

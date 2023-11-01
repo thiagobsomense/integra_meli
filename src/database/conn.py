@@ -1,8 +1,11 @@
+import logging
 from decouple import config
 from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.ext.automap import automap_base
 
+
+logging.basicConfig(level=logging.INFO, filename="database.log", format="%(asctime)s - %(levelname)s - %(message)s")
 
 username = config('DB_USERNAME')
 password = config('DB_PASSWORD')
@@ -26,7 +29,7 @@ PedidoPgtoML = Base.classes.ml_pedidos_pagamentos
 PedidoEnvioML = Base.classes.ml_pedidos_envios
 PedidoDevolucaoML = Base.classes.ml_pedidos_devolucao
 FatPeriodosML = Base.classes.ml_faturamento_periodos
-FatDocuemntosML = Base.classes.ml_faturamento_documentos
+FatDocumentosML = Base.classes.ml_faturamento_documentos
 FatResumoML = Base.classes.ml_faturamento_resumo
 FatDetalhesML = Base.classes.ml_faturamento_detalhes
 FatLogFullML = Base.classes.ml_faturamento_logistica_full
@@ -34,6 +37,6 @@ FatGarantiasML = Base.classes.ml_faturamento_garantias
 LogsML = Base.classes.ml_logs
 
 try:
-    async_session = AsyncSession(async_engine)
-except Exception as e:
-    print(f'Não foi possível conectar ao banco de dados {e}')
+    async_session = AsyncSession(async_engine, expire_on_commit=False)
+except Exception as err:
+    logging.error(f'Não foi possível conectar ao banco de dados. Erro: {err}')
