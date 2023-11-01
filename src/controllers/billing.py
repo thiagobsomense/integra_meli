@@ -218,8 +218,8 @@ async def get_billings(billing_api, user_id):
                                     operation = await create_or_update_periods(session, user_id, group, document_type, billing)
                                     
                                     await get_documets(billing_api, session, user_id, key, group, document_type,operation)
-                                    # await get_summary(billing_api, session, user_id, key, group, document_type, operation)
-                                    await get_details(billing_api, session, user_id, key, group, document_type, operation)
+                                    await get_summary(billing_api, session, user_id, key, group, document_type, operation)
+                                    # await get_details(billing_api, session, user_id, key, group, document_type, operation)
                                     # await get_insurtech(billing_api, session, user_id, key, group, document_type, operation)
                                     # await get_fulfillment(billing_api, session, user_id, key, group, document_type, operation)
 
