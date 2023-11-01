@@ -232,7 +232,7 @@ async def get_billings(billing_api, user_id):
                             await session.commit()
                             logger.info(f'Tarefa finalizada({group} / {document_type}): Total de {count_add} novos registros e {count_update} registros atualizados', extra={'user_id': user_id, 'body': None, 'init_at': init_at, 'end_at': datetime.now()})
                         else:
-                            logger.warning('Falha na solicitação --', extra={'user_id': user_id, 'body': f'status: {api_call}', 'init_at': init_at, 'end_at': datetime.now()})
+                            logger.warning('Falha na solicitação', extra={'user_id': user_id, 'body': f'status: {api_call}', 'init_at': init_at, 'end_at': datetime.now()})
                             return api_call
 
             except Exception as err:
