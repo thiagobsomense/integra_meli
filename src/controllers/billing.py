@@ -77,7 +77,7 @@ async def get_summary(billing_api, session, user_id, key, group, document_type, 
         #logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
 
 
-@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'))
+@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'), timeout=30)
 async def get_details(billing_api, session, user_id, key, group, document_type, operation):
     try:
         if operation:
