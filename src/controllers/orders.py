@@ -8,20 +8,6 @@ from database.orders import *
 from  config.logging import logger
 
 
-""" def recursive_function(order_api, api_offset):
-
-    total = orders['paging']['total']
-    offset = orders['paging']['offset']
-    limit = orders['paging']['limit']
-
-    max_pages = floor(total / limit)
-    max_offset = max_pages * limit
-    new_offset = offset + limit if offset < max_offset else False
-
-    if new_offset:
-        download_order(order_api, new_offset) """
-
-
 async def get_orders(order_api, user_id):
     init_at = datetime.now()
     count_add = 0
