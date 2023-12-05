@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+from retrying_async import retry
 from decouple import config
 from datetime import datetime, timedelta
 from math import ceil
@@ -8,6 +9,7 @@ from database.orders import *
 from  config.logging import logger
 
 
+@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'))
 async def get_orders(order_api, user_id):
     init_at = datetime.now()
     count_add = 0
@@ -56,6 +58,7 @@ async def get_orders(order_api, user_id):
         return shipping_tasks
 
 
+@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'))
 async def get_shipping(data, order, user_id):
     init_at = datetime.now()
     count_add = 0
@@ -84,6 +87,7 @@ async def get_shipping(data, order, user_id):
 
 
 
+@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'))
 def get_new_shipping(order):
     # TODO(Feat): Verificar como realizar o New Shipping
     
@@ -111,6 +115,7 @@ def get_new_shipping(order):
     pass
 
 
+@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'))
 async def update_shippings(order_api, user_id):
     init_at = datetime.now()
     count_update = 0
@@ -138,6 +143,7 @@ async def update_shippings(order_api, user_id):
 
 
 
+@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'))
 async def get_claims(order_api, user_id):
     init_at = datetime.now()
     count = 0
@@ -174,6 +180,7 @@ async def get_claims(order_api, user_id):
         logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
 
 
+@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'))
 async def get_returns(order_api, user_id):
     init_at = datetime.now()
     count_add = 0

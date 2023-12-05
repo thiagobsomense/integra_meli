@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+from retrying_async import retry
 from datetime import datetime
 from math import ceil
 from sqlalchemy import delete
@@ -12,6 +13,7 @@ groups = ['ML', 'MP']
 document_types = ['BILL', 'CREDIT_NOTE']
 
 
+@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'))
 async def get_documets(billing_api, session, user_id, key, group, document_type, operation):
     try:
         if operation:
@@ -50,6 +52,7 @@ async def get_documets(billing_api, session, user_id, key, group, document_type,
         print(err)
 
 
+@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'))
 async def get_summary(billing_api, session, user_id, key, group, document_type, operation):
     try:
         if operation:
@@ -74,6 +77,7 @@ async def get_summary(billing_api, session, user_id, key, group, document_type, 
         #logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
 
 
+@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'))
 async def get_details(billing_api, session, user_id, key, group, document_type, operation):
     try:
         if operation:
@@ -113,6 +117,7 @@ async def get_details(billing_api, session, user_id, key, group, document_type, 
         print(err)
 
 
+@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'))
 async def get_insurtech(billing_api, session, user_id, key, group, document_type, operation):
     try:
         if operation:
@@ -151,6 +156,7 @@ async def get_insurtech(billing_api, session, user_id, key, group, document_type
         print(err)
 
 
+@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'))
 async def get_fulfillment(billing_api, session, user_id, key, group, document_type, operation):
     try:
         if operation:
@@ -189,6 +195,7 @@ async def get_fulfillment(billing_api, session, user_id, key, group, document_ty
         print(err)
 
 
+@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'))
 async def get_billings(billing_api, user_id):
     for group in groups:
         for document_type in document_types:
