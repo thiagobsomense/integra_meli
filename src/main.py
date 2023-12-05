@@ -2,7 +2,7 @@ import sys
 import asyncio
 from sqlalchemy import select
 from database.conn import async_session, LojaML
-from controllers.utils import verify_access_token,clear_logs
+from controllers.utils import verify_access_token, clear_logs
 from controllers.orders import *
 from controllers.billing import *
 from api.orders import Orders
