@@ -1,6 +1,5 @@
 import aiohttp
 import asyncio
-from retrying_async import retry
 from datetime import datetime
 from math import ceil
 from sqlalchemy import delete
@@ -13,7 +12,6 @@ groups = ['ML', 'MP']
 document_types = ['BILL', 'CREDIT_NOTE']
 
 
-@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'))
 async def get_documets(billing_api, session, user_id, key, group, document_type, operation):
     try:
         if operation:
@@ -52,7 +50,6 @@ async def get_documets(billing_api, session, user_id, key, group, document_type,
         print(err)
 
 
-@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'))
 async def get_summary(billing_api, session, user_id, key, group, document_type, operation):
     try:
         if operation:
@@ -77,13 +74,12 @@ async def get_summary(billing_api, session, user_id, key, group, document_type, 
         #logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
 
 
-@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'), timeout=30)
 async def get_details(billing_api, session, user_id, key, group, document_type, operation):
     try:
         if operation:
             async with aiohttp.ClientSession() as client_session:
                 api_call = await billing_api.billing_details(client_session, key, group, document_type)
-                
+
                 if isinstance(api_call, dict):
                     offset = 0
                     total = api_call['total']
@@ -96,15 +92,14 @@ async def get_details(billing_api, session, user_id, key, group, document_type, 
                         offset += limit
 
                     results = await asyncio.gather(*tasks)
-                    print(results)
-                    # for result in results:
-                    #     for info in result['results']:
+                    for result in results:
+                       for info in result['results']:
                             
-                    #         if operation == 'create':
-                    #             await add_details(session, user_id, key, group, document_type, info)
+                            if operation == 'create':
+                                await add_details(session, user_id, key, group, document_type, info)
 
-                    #         if operation == 'update':
-                    #             await update_details(session, user_id, info)
+                            if operation == 'update':
+                                await update_details(session, user_id, info)
 
                     # logger.info(f'Tarefa Concluída - {count} novos registros', extra={'user_id': user_id, 'body': None, 'init_at': init_at, 'end_at': datetime.now()})
                 
@@ -113,11 +108,10 @@ async def get_details(billing_api, session, user_id, key, group, document_type, 
                     print(api_call)
 
     except Exception as err:
-        #logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
+        # logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
         print(err)
 
 
-@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'))
 async def get_insurtech(billing_api, session, user_id, key, group, document_type, operation):
     try:
         if operation:
@@ -156,7 +150,6 @@ async def get_insurtech(billing_api, session, user_id, key, group, document_type
         print(err)
 
 
-@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'))
 async def get_fulfillment(billing_api, session, user_id, key, group, document_type, operation):
     try:
         if operation:
@@ -195,7 +188,6 @@ async def get_fulfillment(billing_api, session, user_id, key, group, document_ty
         print(err)
 
 
-@retry(attempts=config('RETRAY_NUMBER'), delay=config('RETRAY_DELAY'))
 async def get_billings(billing_api, user_id):
     for group in groups:
         for document_type in document_types:
@@ -207,6 +199,7 @@ async def get_billings(billing_api, user_id):
                 async with async_session as session:
                     async with aiohttp.ClientSession() as client_session:
                         api_call = await billing_api.billing_periods(client_session, group, document_type)
+                        
                         if isinstance(api_call, dict):
                             offset = 0
                             total = api_call['total']
@@ -224,11 +217,11 @@ async def get_billings(billing_api, user_id):
                                     key = str(billing['key'])
                                     operation = await create_or_update_periods(session, user_id, group, document_type, billing)
                                     
-                                    await get_documets(billing_api, session, user_id, key, group, document_type,operation)
+                                    await get_documets(billing_api, session, user_id, key, group, document_type, operation)
                                     await get_summary(billing_api, session, user_id, key, group, document_type, operation)
-                                    # await get_details(billing_api, session, user_id, key, group, document_type, operation)
-                                    # await get_insurtech(billing_api, session, user_id, key, group, document_type, operation)
-                                    # await get_fulfillment(billing_api, session, user_id, key, group, document_type, operation)
+                                    await get_details(billing_api, session, user_id, key, group, document_type, operation)
+                                    await get_insurtech(billing_api, session, user_id, key, group, document_type, operation)
+                                    await get_fulfillment(billing_api, session, user_id, key, group, document_type, operation)
 
                                     if operation == 'create':
                                         count_add += 1

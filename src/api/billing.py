@@ -1,3 +1,7 @@
+from retrying_async import retry
+from decouple import config
+
+
 class Billings():
     api_base = 'https://api.mercadolibre.com/billing/integration'
 
@@ -5,6 +9,7 @@ class Billings():
         self.token = token
         self.headers = {'Authorization': f'Bearer {self.token}', }
 
+    @retry(attempts=int(config('RETRAY_NUMBER')), delay=int(config('RETRAY_DELAY')))
     async def billing_periods(self, session, group, document_type, offset=0, limit=12):
         params = {
             'group': group,
@@ -17,7 +22,8 @@ class Billings():
         async with session.get(url, headers=self.headers, params=params) as response:
             resp = await response.json() if response.status == 200 else response.status
             return resp
-        
+
+    @retry(attempts=int(config('RETRAY_NUMBER')), delay=int(config('RETRAY_DELAY')))  
     async def billing_documents(self, session, key, group, document_type, offset=0, limit=150):
         params = {
             'group': group,
@@ -31,6 +37,7 @@ class Billings():
             resp = await response.json() if response.status == 200 else response.status
             return resp
     
+    @retry(attempts=int(config('RETRAY_NUMBER')), delay=int(config('RETRAY_DELAY')))
     async def billing_summary(self, session, key, group, document_type):
         params = {
             'group': group,
@@ -41,8 +48,9 @@ class Billings():
         async with session.get(url, headers=self.headers, params=params) as response:
             resp = await response.json() if response.status == 200 else response.status
             return resp
-        
-    async def billing_details(self, session, key, group, document_type, offset=0, limit=500):
+
+    @retry(attempts=int(config('RETRAY_NUMBER')), delay=int(config('RETRAY_DELAY')), timeout=10)    
+    async def billing_details(self, session, key, group, document_type, offset=0, limit=150):
         params = {
             'document_type': document_type,
             'limit': limit,
@@ -54,6 +62,7 @@ class Billings():
             resp = await response.json() if response.status == 200 else response.status
             return resp
     
+    @retry(attempts=int(config('RETRAY_NUMBER')), delay=int(config('RETRAY_DELAY')))
     async def billing_fulfillment(self, session, group, document_type, key, offset=0, limit=150):
         params = {
             'document_type': document_type,
@@ -66,6 +75,7 @@ class Billings():
             resp = await response.json() if response.status == 200 else response.status
             return resp
     
+    @retry(attempts=int(config('RETRAY_NUMBER')), delay=int(config('RETRAY_DELAY')))
     async def billing_insurtech(self, session, group, document_type, key, offset=0, limit=150):
         params = {
             'document_type': document_type,

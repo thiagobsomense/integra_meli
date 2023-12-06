@@ -1,3 +1,4 @@
+from retrying_async import retry
 from decouple import config
 from datetime import datetime, timedelta
 
@@ -10,6 +11,7 @@ class Orders():
         self.token = token
         self.headers = {'Authorization': f'Bearer {self.token}', }
 
+    @retry(attempts=int(config('RETRAY_NUMBER')), delay=int(config('RETRAY_DELAY')))
     async def orders_period(self, session, offset=0):
         # TODO(Fix): verificar formtado de data e deixa-la dinamica
         now = datetime.now()
@@ -31,6 +33,7 @@ class Orders():
             resp = await response.json() if response.status == 200 else response.status
             return resp
 
+    @retry(attempts=int(config('RETRAY_NUMBER')), delay=int(config('RETRAY_DELAY')))
     async def archived_orders(self, session, offset=0):
         params = {
             'seller': self.client_id,
@@ -42,6 +45,7 @@ class Orders():
             resp = await response.json() if response.status == 200 else response.status
             return resp
 
+    @retry(attempts=int(config('RETRAY_NUMBER')), delay=int(config('RETRAY_DELAY')))
     async def recents_orders(self, session, offset=0):
         params = {
             'seller': self.client_id,
@@ -54,7 +58,8 @@ class Orders():
 
     def products():
         pass
-
+    
+    @retry(attempts=int(config('RETRAY_NUMBER')), delay=int(config('RETRAY_DELAY')))
     async def shipping(self, session, shipment_id):
         url = f'https://api.mercadolibre.com/shipments/{shipment_id}'
 
@@ -64,7 +69,8 @@ class Orders():
 
     def payments():
         pass
-
+    
+    @retry(attempts=int(config('RETRAY_NUMBER')), delay=int(config('RETRAY_DELAY')))
     async def claims(self, session, offset=0):
         params = {
             'status': 'opened',
@@ -77,6 +83,7 @@ class Orders():
             resp = await response.json() if response.status == 200 else response.status
             return resp
 
+    @retry(attempts=int(config('RETRAY_NUMBER')), delay=int(config('RETRAY_DELAY')))
     async def returns(self, session, claim_id):
         url = f'https://api.mercadolibre.com/v2/claims/{claim_id}/returns'
 
