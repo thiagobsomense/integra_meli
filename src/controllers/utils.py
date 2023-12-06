@@ -12,7 +12,7 @@ async def verify_access_token(store):
         store_id = store.user_id
         token = store.access_token
         date_expire = store.last_updated + timedelta(seconds=int(store.expires_in))
-
+        
         if date_expire < datetime.now():
             client_id = config('CLIENT_ID')
             client_secret = config('CLIENT_SECRET')

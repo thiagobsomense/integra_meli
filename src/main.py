@@ -18,11 +18,11 @@ else:
 async def main():  
     async with async_session as session:
         stores = await session.execute(select(LojaML))
-
+    
     for store in stores.scalars():
         user_id = store.user_id
         access_token = await verify_access_token(store)
-
+        
         order = Orders(user_id, access_token)
         billing = Billings(access_token)
 

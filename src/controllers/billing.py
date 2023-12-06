@@ -1,5 +1,5 @@
-import aiohttp
 import asyncio
+import aiohttp
 from datetime import datetime
 from math import ceil
 from sqlalchemy import delete
@@ -79,7 +79,7 @@ async def get_details(billing_api, session, user_id, key, group, document_type, 
         if operation:
             async with aiohttp.ClientSession() as client_session:
                 api_call = await billing_api.billing_details(client_session, key, group, document_type)
-
+                
                 if isinstance(api_call, dict):
                     offset = 0
                     total = api_call['total']
@@ -91,10 +91,10 @@ async def get_details(billing_api, session, user_id, key, group, document_type, 
                         tasks.append(asyncio.create_task(billing_api.billing_details(client_session, key, group, document_type, offset)))
                         offset += limit
 
-                    results = await asyncio.gather(*tasks)
+                    results = await asyncio.wait(*tasks, timeout=0.5)
                     for result in results:
                        for info in result['results']:
-                            
+                            print(info, total, max_pages)
                             if operation == 'create':
                                 await add_details(session, user_id, key, group, document_type, info)
 
@@ -217,11 +217,11 @@ async def get_billings(billing_api, user_id):
                                     key = str(billing['key'])
                                     operation = await create_or_update_periods(session, user_id, group, document_type, billing)
                                     
-                                    await get_documets(billing_api, session, user_id, key, group, document_type, operation)
-                                    await get_summary(billing_api, session, user_id, key, group, document_type, operation)
+                                    # await get_documets(billing_api, session, user_id, key, group, document_type, operation)
+                                    # await get_summary(billing_api, session, user_id, key, group, document_type, operation)
                                     await get_details(billing_api, session, user_id, key, group, document_type, operation)
-                                    await get_insurtech(billing_api, session, user_id, key, group, document_type, operation)
-                                    await get_fulfillment(billing_api, session, user_id, key, group, document_type, operation)
+                                    # await get_insurtech(billing_api, session, user_id, key, group, document_type, operation)
+                                    # await get_fulfillment(billing_api, session, user_id, key, group, document_type, operation)
 
                                     if operation == 'create':
                                         count_add += 1
