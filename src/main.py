@@ -27,8 +27,9 @@ async def main():
         billing = Billings(access_token)
 
         if executor in ['all', 'orders']:
-            task_order = await get_orders(order, user_id)
-            await get_shipping(task_order, order, user_id)
+            shipping_tasks, order_tasks = await get_orders(order, user_id)
+            await get_shipping(shipping_tasks, order, user_id)
+            await get_danfe(order_tasks, order, user_id)
 
         if executor in ['all', 'shippings']:
             await update_shippings(order, user_id)
@@ -37,7 +38,7 @@ async def main():
             await get_returns(order, user_id)
             await get_claims(order, user_id)
 
-        if executor in ['all', 'billings']:
+        if executor in ['billings']:
             await get_billings(billing, user_id)
     
     await clear_logs()   

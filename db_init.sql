@@ -184,6 +184,29 @@ CREATE TABLE IF NOT EXISTS `ml_pedidos_devolucao` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 
+CREATE TABLE IF NOT EXISTS `ml_nota_fiscal` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` VARCHAR(255) NOT NULL,
+  `ml_order_id` VARCHAR(255) NOT NULL,
+  `status` VARCHAR(45) NOT NULL,
+  `transaction_status` VARCHAR(45) NOT NULL,
+  `issuer_json` TEXT NULL,
+  `recipient_json` TEXT NULL,
+  `shipment_json` TEXT NULL,
+  `items_json` TEXT NULL,
+  `issued_date` VARCHAR(45) NULL,
+  `invoice_series` INT NULL,
+  `invoice_number` BIGINT NULL,
+  `attributes_json` TEXT NULL,
+  `fiscal_data_json` TEXT NULL,
+  `amount` DECIMAL(20,2) NULL,
+  `items_amount` DECIMAL(20,2) NULL,
+  `errors_json` TEXT NULL,
+  `items_quantity` INT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+
 CREATE TABLE IF NOT EXISTS `ml_faturamento_periodos` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` varchar(255) NOT NULL,

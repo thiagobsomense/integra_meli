@@ -93,3 +93,11 @@ class Orders:
             }
 
             return obj
+        
+    @retry(attempts=int(config("RETRAY_NUMBER")), delay=int(config("RETRAY_DELAY")))
+    async def danfe(self, session, user_id, order_id):
+        url = f"https://api.mercadolibre.com/users/{user_id}/invoices/orders/{order_id}"
+        
+        async with session.get(url, headers=self.headers) as response:
+            resp = await response.json() if response.status == 200 else response.status
+            return resp

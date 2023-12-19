@@ -28,6 +28,7 @@ PedidoItemML = Base.classes.ml_pedidos_itens
 PedidoPgtoML = Base.classes.ml_pedidos_pagamentos
 PedidoEnvioML = Base.classes.ml_pedidos_envios
 PedidoDevolucaoML = Base.classes.ml_pedidos_devolucao
+PedidoDanfeML = Base.classes.ml_nota_fiscal
 FatPeriodosML = Base.classes.ml_faturamento_periodos
 FatDocumentosML = Base.classes.ml_faturamento_documentos
 FatResumoML = Base.classes.ml_faturamento_resumo

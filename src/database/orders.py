@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from sqlalchemy import select, update
-from database.conn import PedidoML, PedidoItemML, PedidoPgtoML, PedidoEnvioML, PedidoDevolucaoML
+from database.conn import PedidoML, PedidoItemML, PedidoPgtoML, PedidoEnvioML, PedidoDevolucaoML, PedidoDanfeML
 
 
 async def add_order(session, order):
@@ -263,3 +263,27 @@ async def create_or_update_returns(session, order, result):
     else:
         await update_returns(session, result)
         return 'update'
+
+
+async def add_danfe(session, seller_id, order_id, data):
+    danfe_data = {
+        'user_id': seller_id,
+        'ml_order_id': order_id,
+        'status': data['status'],
+        'transaction_status': data['transaction_status'],
+        'issuer_json': json.dumps(data['issuer']),
+        'recipient_json': json.dumps(data['recipient']),
+        'shipment_json': json.dumps(data['shipment']),
+        'items_json': json.dumps(data['items']),
+        'issued_date': data['issued_date'],
+        'invoice_series': data['invoice_series'],
+        'invoice_number': data['invoice_number'],
+        'attributes_json': json.dumps(data['attributes']),
+        'fiscal_data_json': json.dumps(data['fiscal_data']),
+        'amount': data['amount'],
+        'items_amount': data['items_amount'],
+        'errors_json': json.dumps(data['errors']),
+        'items_quantity': data['items_quantity']
+    }
+
+    session.add(PedidoDanfeML(**danfe_data))

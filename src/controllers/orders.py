@@ -13,6 +13,7 @@ async def get_orders(order_api, user_id):
     count_add = 0
     count_update = 0
     shipping_tasks = []
+    order_tasks = []
 
     try:
         async with async_session as session:
@@ -37,6 +38,7 @@ async def get_orders(order_api, user_id):
                                 await add_items(session, order)
                                 await add_payments(session, order)
                                 shipping_tasks.append(order['shipping']['id'])
+                                order_tasks.append(order['id'])
                                 count_add += 1
                             else:
                                 await update_payments(session, order)
@@ -53,7 +55,7 @@ async def get_orders(order_api, user_id):
         logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
 
     finally:
-        return shipping_tasks
+        return shipping_tasks, order_tasks
 
 
 async def get_shipping(data, order, user_id):
@@ -71,6 +73,34 @@ async def get_shipping(data, order, user_id):
                     results = await asyncio.gather(*tasks)
                     for result in results:
                         await add_shipping(session, result)
+                        count_add += 1
+
+                    await session.commit()
+                    logger.info(f'Tarefa finalizada: Total de {count_add} novos registros.', extra={'user_id': user_id, 'body': None, 'init_at': init_at, 'end_at': datetime.now()})
+    
+                else:
+                    print(data)
+
+    except Exception as err:
+        logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
+
+
+async def get_danfe(data, order, user_id):
+    init_at = datetime.now()
+    count_add = 0
+
+    try:
+        async with async_session as session:
+            async with aiohttp.ClientSession() as client_session:
+                if isinstance(data, list):
+                    tasks = []
+                    for order_id in data:
+                        tasks.append(asyncio.create_task(order.danfe(client_session, user_id, order_id)))
+
+                    results = await asyncio.gather(*tasks)
+                    for result in results:
+                        order_raw = result['items'][0]['external_order_id']
+                        await add_danfe(session, user_id, order_raw, result)
                         count_add += 1
 
                     await session.commit()
