@@ -28,12 +28,10 @@ async def main():
 
         if executor in ['all', 'orders']:
             shipping_tasks, order_tasks = await get_orders(order, user_id)
-            print(order_tasks)
             await get_shipping(shipping_tasks, order, user_id)
             await get_danfe(order_tasks, order, user_id)
 
         if executor in ['all', 'shippings']:
-            print('teste2')
             await update_shippings(order, user_id)
 
         if executor in ['all', 'returns']:
