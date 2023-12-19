@@ -202,7 +202,7 @@ async def update_details(session, user_id, response):
         'charge_bonified_id': response['charge_info']['charge_bonified_id']
     }
 
-    detail_id: str(response['charge_info']['detail_id'])
+    detail_id = str(response['charge_info']['detail_id'])
     query = update(FatDetalhesML).where(FatDetalhesML.user_id == user_id, FatDetalhesML.detail_id == detail_id).values(data_atualizacao=datetime.now(), **data)
     await session.execute(query)
 
@@ -248,7 +248,7 @@ async def update_insurtech(session, user_id, response):
         'prepaid_info_json': json.dumps(response['prepaid_info'])
     }
 
-    detail_id: str(response['charge_info']['detail_id'])
+    detail_id = str(response['charge_info']['detail_id'])
     query = update(FatGarantiasML).where(FatGarantiasML.user_id == user_id, FatGarantiasML.detail_id == detail_id).values(data_atualizacao=datetime.now(), **data)
     await session.execute(query)
 
@@ -303,6 +303,6 @@ async def update_fulfillment(session, user_id, response):
         'charge_bonified_id': response['charge_info']['charge_bonified_id']
     }
 
-    detail_id: str(response['charge_info']['detail_id'])
+    detail_id = str(response['charge_info']['detail_id'])
     query = update(FatLogFullML).where(FatLogFullML.user_id == user_id, FatLogFullML.detail_id == detail_id).values(data_atualizacao=datetime.now(), **data)
     await session.execute(query)

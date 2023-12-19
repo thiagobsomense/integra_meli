@@ -3,8 +3,8 @@ import asyncio
 from sqlalchemy import select
 from database.conn import async_session, LojaML
 from controllers.utils import verify_access_token, clear_logs
-from controllers.orders import *
-from controllers.billing import *
+from controllers.orders import get_orders, get_shipping, update_shippings, get_danfe, get_returns, get_claims
+from controllers.billing import get_billings
 from api.orders import Orders
 from api.billing import Billings
 

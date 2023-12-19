@@ -3,8 +3,9 @@ import asyncio
 from decouple import config
 from datetime import datetime, timedelta
 from math import ceil
-from database.conn import *
-from database.orders import *
+from sqlalchemy import select, update
+from database.conn import async_session, PedidoEnvioML, PedidoML
+from database.orders import create_or_update_order, add_items, add_payments, update_payments, add_shipping, add_danfe, update_shipping, update_claim, create_or_update_returns
 from  config.logging import logger
 
 

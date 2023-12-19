@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import update, delete
 from decouple import config
 from api.auth import Client
-from database.conn import *
+from database.conn import async_session, LojaML, LogsML
 from config.logging import logger
 
 
