@@ -18,6 +18,21 @@ DROP TABLE IF EXISTS db_analize.ml_faturamento_detalhes;
 DROP TABLE IF EXISTS db_analize.ml_faturamento_garantias;
 DROP TABLE IF EXISTS db_analize.ml_faturamento_logistica_full;
 
+
+CREATE TABLE IF NOT EXISTS `ml_loja` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `nome` varchar(255) DEFAULT NULL,
+  `access_token` varchar(255) DEFAULT NULL,
+  `token_type` varchar(255) DEFAULT NULL,
+  `expires_in` varchar(255) DEFAULT NULL,
+  `user_id` varchar(255) DEFAULT NULL,
+  `refresh_token` varchar(255) DEFAULT NULL,
+  `data_insercao` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_updated` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+
 CREATE TABLE IF NOT EXISTS `ml_pedidos` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` varchar(255) NOT NULL,
