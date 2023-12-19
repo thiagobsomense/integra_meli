@@ -105,8 +105,8 @@ async def get_danfe(data, order, user_id):
                             await add_danfe(session, user_id, order_raw, result)
                             count_add += 1
 
-                        await session.commit()
-                        logger.info(f'Tarefa finalizada: Total de {count_add} novos registros.', extra={'user_id': user_id, 'body': None, 'init_at': init_at, 'end_at': datetime.now()})
+                    await session.commit()
+                    logger.info(f'Tarefa finalizada: Total de {count_add} novos registros.', extra={'user_id': user_id, 'body': None, 'init_at': init_at, 'end_at': datetime.now()})
     
                 else:
                     print(data)
