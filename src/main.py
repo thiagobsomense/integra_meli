@@ -1,13 +1,8 @@
 import sys
+sys.path.append('/home/PedroLucas/integra_meli')
+
 import asyncio
 from sqlalchemy import select
-
-path = '/home/PedroLucas'
-app_path = path + '/integra_meli'
-if path not in sys.path:
-    sys.path.append(path)
-    sys.path.append(app_path)
-
 from database.conn import async_session, LojaML
 from controllers.utils import verify_access_token, clear_logs
 from controllers.orders import get_orders, get_shipping, update_shippings, get_danfe, get_returns, get_claims
