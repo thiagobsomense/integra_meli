@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/home/PedroLucas/integra_meli')
+sys.path.append('/home/thiagobsomense/integra_meli')
 
 import asyncio
 from sqlalchemy import select
