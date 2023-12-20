@@ -212,6 +212,7 @@ CREATE TABLE IF NOT EXISTS `ml_nota_fiscal` (
   `issued_date` VARCHAR(45) NULL,
   `invoice_series` INT NULL,
   `invoice_number` BIGINT NULL,
+  `invoice_key` VARCHAR(255) NOT NULL,
   `attributes_json` TEXT NULL,
   `fiscal_data_json` TEXT NULL,
   `amount` DECIMAL(20,2) NULL,

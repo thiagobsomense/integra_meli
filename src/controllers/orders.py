@@ -88,7 +88,7 @@ async def get_shipping(data, order, user_id):
 
 async def get_danfe(data, order, user_id):
     init_at = datetime.now()
-    count_add = 0
+    rowcount = 0
 
     try:
         async with async_session as session:
@@ -102,11 +102,11 @@ async def get_danfe(data, order, user_id):
                     for result in results:
                         if isinstance(result, dict):
                             order_raw = result['items'][0]['external_order_id']
-                            await add_danfe(session, user_id, order_raw, result)
-                            count_add += 1
+                            danfe = await add_danfe(session, user_id, order_raw, result)
+                            if danfe: rowcount += 1 
 
                     await session.commit()
-                    logger.info(f'Tarefa finalizada: Total de {count_add} novos registros.', extra={'user_id': user_id, 'body': None, 'init_at': init_at, 'end_at': datetime.now()})
+                    logger.info(f'Tarefa finalizada: Total de {rowcount} novos registros.', extra={'user_id': user_id, 'body': None, 'init_at': init_at, 'end_at': datetime.now()})
     
                 else:
                     print(data)

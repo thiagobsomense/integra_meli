@@ -278,6 +278,7 @@ async def add_danfe(session, seller_id, order_id, data):
         'issued_date': data['issued_date'],
         'invoice_series': data['invoice_series'],
         'invoice_number': data['invoice_number'],
+        'invoice_key': data['attributes']['invoice_key'],
         'attributes_json': json.dumps(data['attributes']),
         'fiscal_data_json': json.dumps(data['fiscal_data']),
         'amount': data['amount'],
@@ -286,4 +287,7 @@ async def add_danfe(session, seller_id, order_id, data):
         'items_quantity': data['items_quantity']
     }
 
-    session.add(PedidoDanfeML(**danfe_data))
+    danfe = await session.execute(select(PedidoDanfeML).filter(PedidoDanfeML.ml_order_id == order_id, PedidoDanfeML.invoice_key == danfe_data['invoice_key']))
+    if len(danfe.fetchall()) == 0:
+        session.add(PedidoDanfeML(**danfe_data))
+        return True
