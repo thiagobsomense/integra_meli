@@ -11,7 +11,6 @@ from config.logging import logger
 groups = ['ML', 'MP']
 document_types = ['BILL', 'CREDIT_NOTE']
 
-
 async def get_documets(billing_api, session, user_id, key, group, document_type, operation):
     try:
         if operation:
@@ -77,6 +76,7 @@ async def get_summary(billing_api, session, user_id, key, group, document_type, 
 async def get_details(billing_api, session, user_id, key, group, document_type, operation):
     try:
         if operation:
+            semaphore = asyncio.Semaphore(5)
             async with aiohttp.ClientSession() as client_session:
                 api_call = await billing_api.billing_details(client_session, key, group, document_type)
                 
@@ -86,20 +86,28 @@ async def get_details(billing_api, session, user_id, key, group, document_type, 
                     limit = api_call['limit']
                     max_pages = ceil(total / limit)
 
+                    async def fetch_page(offset):
+                        async with semaphore:
+                            return await billing_api.billing_details(client_session, key, group, document_type, offset)
+
+                    async def fetch_and_process_page(offset):
+                        result = await fetch_page(offset)
+                        print(result)
+                        if isinstance(result, dict):
+                            for info in result['results']:
+                                if operation == 'create':
+                                    await add_details(session, user_id, key, group, document_type, info)
+
+                                if operation == 'update':
+                                    await update_details(session, user_id, info)
+                    
                     tasks = []
                     for page in range(0, max_pages):
-                        tasks.append(asyncio.create_task(billing_api.billing_details(client_session, key, group, document_type, offset)))
+                        tasks = await fetch_and_process_page(offset)
                         offset += limit
-
-                    results = await asyncio.wait(*tasks, timeout=0.5)
-                    for result in results:
-                       for info in result['results']:
-                            print(info, total, max_pages)
-                            if operation == 'create':
-                                await add_details(session, user_id, key, group, document_type, info)
-
-                            if operation == 'update':
-                                await update_details(session, user_id, info)
+                        await asyncio.sleep(0.5)
+                    
+                    await asyncio.gather(*tasks)
 
                     # logger.info(f'Tarefa Concluída - {count} novos registros', extra={'user_id': user_id, 'body': None, 'init_at': init_at, 'end_at': datetime.now()})
                 

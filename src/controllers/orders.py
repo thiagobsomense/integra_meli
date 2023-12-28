@@ -157,11 +157,11 @@ async def update_shippings(order_api, user_id):
                 tasks = []
                 for shipping in data:
                     tasks.append(asyncio.create_task(order_api.shipping(client_session, shipping.shipping_id)))
-
+                
                 results = await asyncio.gather(*tasks)
                 for result in results:
                     await update_shipping(session, result)
-
+                
             await session.commit()
             logger.info(f'Tarefa finalizada: Total de {count_update} registros atualizados.', extra={'user_id': user_id, 'body': None, 'init_at': init_at, 'end_at': datetime.now()})
     

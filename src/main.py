@@ -16,7 +16,6 @@ if len(sys.argv) > 1:
 else:
     executor = 'all'
 
-
 async def main():  
     async with async_session as session:
         stores = await session.execute(select(LojaML))

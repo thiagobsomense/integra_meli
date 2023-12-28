@@ -34,7 +34,7 @@ logger.setLevel(logging.DEBUG)
 customhandler = CustomHandler(session)
 logger.addHandler(customhandler)
 
-formatter = logging.Formatter("%(asctime)s - %(user_id)s - %(funcName)s - %(levelname)s - %(message)s")
+formatter = logging.Formatter("%(asctime)s - %(user_id)s - %(funcName)s - %(levelname)s - %(message)s - %(body)s")
 stream = logging.StreamHandler()
 stream.setFormatter(formatter)
 logger.addHandler(stream)
