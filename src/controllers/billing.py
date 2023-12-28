@@ -92,7 +92,6 @@ async def get_details(billing_api, session, user_id, key, group, document_type, 
 
                     async def fetch_and_process_page(offset):
                         result = await fetch_page(offset)
-                        print(result)
                         if isinstance(result, dict):
                             for info in result['results']:
                                 if operation == 'create':
@@ -151,7 +150,7 @@ async def get_insurtech(billing_api, session, user_id, key, group, document_type
                 
                 else:
                     # logger.warning('Falha na solicitação', extra={'user_id': user_id, 'body': f'status: {api_call}', 'init_at': init_at, 'end_at': datetime.now()})
-                    print(api_call)
+                    pass
 
     except Exception as err:
         #logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
@@ -189,7 +188,7 @@ async def get_fulfillment(billing_api, session, user_id, key, group, document_ty
                 
                 else:
                     # logger.warning('Falha na solicitação', extra={'user_id': user_id, 'body': f'status: {api_call}', 'init_at': init_at, 'end_at': datetime.now()})
-                    print(api_call)
+                    pass
 
     except Exception as err:
         #logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
@@ -225,11 +224,11 @@ async def get_billings(billing_api, user_id):
                                     key = str(billing['key'])
                                     operation = await create_or_update_periods(session, user_id, group, document_type, billing)
                                     
-                                    # await get_documets(billing_api, session, user_id, key, group, document_type, operation)
-                                    # await get_summary(billing_api, session, user_id, key, group, document_type, operation)
+                                    await get_documets(billing_api, session, user_id, key, group, document_type, operation)
+                                    await get_summary(billing_api, session, user_id, key, group, document_type, operation)
                                     await get_details(billing_api, session, user_id, key, group, document_type, operation)
-                                    # await get_insurtech(billing_api, session, user_id, key, group, document_type, operation)
-                                    # await get_fulfillment(billing_api, session, user_id, key, group, document_type, operation)
+                                    await get_insurtech(billing_api, session, user_id, key, group, document_type, operation)
+                                    await get_fulfillment(billing_api, session, user_id, key, group, document_type, operation)
 
                                     if operation == 'create':
                                         count_add += 1
