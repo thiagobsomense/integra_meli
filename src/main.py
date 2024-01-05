@@ -1,3 +1,5 @@
+#!/usr/bin/env python3.10
+
 import sys
 sys.path.append('/home/PedroLucas/integra_meli')
 
