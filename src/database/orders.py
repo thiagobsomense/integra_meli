@@ -278,7 +278,7 @@ async def add_danfe(session, seller_id, order_id, data):
         'issued_date': data['issued_date'],
         'invoice_series': data['invoice_series'],
         'invoice_number': data['invoice_number'],
-        'invoice_key': data['attributes']['invoice_key'],
+        'invoice_key': data['attributes']['invoice_key'] or None,
         'attributes_json': json.dumps(data['attributes']),
         'fiscal_data_json': json.dumps(data['fiscal_data']),
         'amount': data['amount'],
