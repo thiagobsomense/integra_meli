@@ -42,7 +42,8 @@ async def get_documets(billing_api, session, user_id, key, group, document_type,
                 
                 else:
                     # logger.warning('Falha na solicitação', extra={'user_id': user_id, 'body': f'status: {api_call}', 'init_at': init_at, 'end_at': datetime.now()})
-                    print(api_call)
+                    # print(api_call)
+                    pass
 
     except Exception as err:
         #logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
@@ -112,7 +113,8 @@ async def get_details(billing_api, session, user_id, key, group, document_type, 
                 
                 else:
                     # logger.warning('Falha na solicitação', extra={'user_id': user_id, 'body': f'status: {api_call}', 'init_at': init_at, 'end_at': datetime.now()})
-                    print(api_call)
+                    # print(api_call)
+                    pass
 
     except Exception as err:
         # logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
