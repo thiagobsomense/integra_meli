@@ -17,7 +17,7 @@ str_conn = f'mysql+pymysql://{username}:{password}@{server}:{port}/{database}'
 engine = create_engine(str_conn)
 
 async_str_conn = f'mysql+asyncmy://{username}:{password}@{server}:{port}/{database}'
-async_engine = create_async_engine(async_str_conn)
+async_engine = create_async_engine(async_str_conn, pool_recycle=280, pool_pre_ping=True)
 
 Base = automap_base()
 Base.prepare(autoload_with=engine)
