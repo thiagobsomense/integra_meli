@@ -247,3 +247,5 @@ async def get_billings(billing_api, user_id):
             except Exception as err:
                 logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
             
+            finally:
+                await session.close()
