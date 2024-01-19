@@ -152,6 +152,9 @@ async def update_summary(session, user_id, key, group, document_type, response):
 
 
 async def add_details(session, user_id, key, group, document_type, response):
+    discount_info = response['discount_info']
+    shipping_info = response['shipping_info']
+
     data = {
         'user_id': user_id,
         'key': key,
@@ -162,23 +165,26 @@ async def add_details(session, user_id, key, group, document_type, response):
         'legal_document_status_description': response['charge_info']['legal_document_status_description'],
         'creation_date_time': response['charge_info']['creation_date_time'],
         'detail_id': response['charge_info']['detail_id'],
+        'movement_id': response['charge_info']['movement_id'] if group == 'MP' else None,
         'transaction_detail': response['charge_info']['transaction_detail'],
-        'debited_from_operation': response['charge_info']['debited_from_operation'] or None,
-        'debited_from_operation_description': response['charge_info']['debited_from_operation_description'],
+        'debited_from_operation': None if group == 'MP' else response['charge_info']['debited_from_operation'],
+        'debited_from_operation_description': None if group == 'MP' else response['charge_info']['debited_from_operation_description'],
         'status': response['charge_info']['status'],
         'status_description': response['charge_info']['status_description'],
         'charge_bonified_id': response['charge_info']['charge_bonified_id'],
         'detail_amount': response['charge_info']['detail_amount'],
         'detail_type': response['charge_info']['detail_type'],
         'detail_sub_type': response['charge_info']['detail_sub_type'],
-        'charge_amount_without_discount': response['discount_info']['charge_amount_without_discount'],
-        'discount_amount': response['discount_info']['discount_amount'],
-        'discount_reason': response['discount_info']['discount_reason'],
-        'sales_info_json': json.dumps(response['sales_info']),
-        'shipping_id': response['shipping_info']['shipping_id'],
-        'pack_id': response['shipping_info']['pack_id'],
-        'receiver_shipping_cost': response['shipping_info']['receiver_shipping_cost'],
-        'items_info_json': json.dumps(response['items_info']),
+        'charge_amount_without_discount': 0 if discount_info == None else response['discount_info']['charge_amount_without_discount'],
+        'discount_amount': 0 if discount_info == None else response['discount_info']['discount_amount'],
+        'discount_reason': None if discount_info == None else response['discount_info']['discount_reason'],
+        'sales_info_json': None if group == 'MP' else json.dumps(response['sales_info']),
+        'shipping_id': None if shipping_info == None else response['shipping_info']['shipping_id'],
+        'pack_id': None if shipping_info == None else response['shipping_info']['pack_id'],
+        'receiver_shipping_cost': None if shipping_info == None else response['shipping_info']['receiver_shipping_cost'],
+        'items_info_json': None if group == 'MP' else json.dumps(response['items_info']),
+        'operation_info_json': json.dumps(response['operation_info']) if group == 'MP' else None,
+        'perception_info_json': json.dumps(response['perception_info']) if group == 'MP' else None,
         'document_id': response['document_info']['document_id'],
         'marketplace': response['marketplace_info']['marketplace'],
         'currency_id': response['currency_info']['currency_id']

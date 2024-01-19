@@ -48,7 +48,7 @@ class Billings:
             resp = await response.json() if response.status == 200 else response.status
             return resp
 
-    @retry(attempts=int(config("RETRAY_NUMBER")), delay=int(config("RETRAY_DELAY")))
+    @retry(attempts=int(config("RETRAY_NUMBER")), delay=int(config("RETRAY_DELAY")), timeout=60)
     async def billing_details(self, session, key, group, document_type, offset=0, limit=150):
         params = {"document_type": document_type, "limit": limit, "offset": offset}
         url = f"{self.api_base}/periods/key/{key}/group/{group}/details"

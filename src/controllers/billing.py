@@ -75,23 +75,26 @@ async def get_summary(billing_api, session, user_id, key, group, document_type, 
 async def get_details(billing_api, session, user_id, key, group, document_type, operation):
     try:
         if operation:
-            semaphore = asyncio.Semaphore(5)
+            semaphore = asyncio.Semaphore(50)
             
             async with aiohttp.ClientSession() as client_session:
-                api_call = await billing_api.billing_details(client_session, key, group, document_type)
+                api_call = await billing_api.billing_details(client_session, key, group, document_type, offset=0, limit=1)
                 
                 if isinstance(api_call, dict):
                     offset = 0
                     total = api_call['total']
-                    limit = api_call['limit']
+                    limit = 150 # api_call['limit']
                     max_pages = ceil(total / limit)
 
                     async def fetch_page(offset):
                         async with semaphore:
-                            return await billing_api.billing_details(client_session, key, group, document_type, offset)
+                            return await billing_api.billing_details(client_session, key, group, document_type, offset, limit)
 
                     async def fetch_and_process_page(offset):
                         result = await fetch_page(offset)
+                        if result == 206:
+                            result = await fetch_page(offset)
+   
                         if isinstance(result, dict):
                             for info in result['results']:
                                 if operation == 'create':
@@ -100,12 +103,14 @@ async def get_details(billing_api, session, user_id, key, group, document_type, 
                                 if operation == 'update':
                                     await update_details(session, user_id, info)
                     
-
-                    for page in range(0, max_pages):
-                        await asyncio.gather(fetch_and_process_page(offset), return_exceptions=False)
-                        offset += limit
-                        await asyncio.sleep(0.2)
                     
+                    task = []
+                    for page in range(0, max_pages):
+                        print(page, max_pages)
+                        task.append(asyncio.create_task(fetch_and_process_page(offset)))
+                        offset += limit
+                    
+                    await asyncio.gather(*task, return_exceptions=False)
                     # logger.info(f'Tarefa Concluída - {count} novos registros', extra={'user_id': user_id, 'body': None, 'init_at': init_at, 'end_at': datetime.now()})
                 
                 else:
