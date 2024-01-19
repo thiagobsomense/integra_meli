@@ -14,10 +14,10 @@ port = config('DB_PORT', cast=int)
 database = config('DB_DATABASE')
 
 str_conn = f'mysql+pymysql://{username}:{password}@{server}:{port}/{database}'
-engine = create_engine(str_conn)
+engine = create_engine(str_conn, pool_timeout=20, pool_recycle=280, pool_pre_ping=True)
 
 async_str_conn = f'mysql+asyncmy://{username}:{password}@{server}:{port}/{database}'
-async_engine = create_async_engine(async_str_conn, pool_timeout=20, pool_recycle=3600)
+async_engine = create_async_engine(async_str_conn, pool_timeout=20, pool_recycle=280, pool_pre_ping=True)
 
 Base = automap_base()
 Base.prepare(autoload_with=engine)

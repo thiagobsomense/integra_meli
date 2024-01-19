@@ -1,0 +1,3 @@
+INSERT INTO db_analize.ml_loja
+(id, nome, access_token, token_type, expires_in, user_id, refresh_token, data_insercao, last_updated)
+VALUES(4, 'GB ACESSORIOS', 'APP_USR-2210627771816477-011621-85b48af8acc7491618bf6a49d6802b60-495487925', 'Bearer', '21600', '495487925', 'TG-65a72cc3c78f1900011fde40-495487925', '2023-10-18 19:14:56', '2024-01-16 22:26:27');

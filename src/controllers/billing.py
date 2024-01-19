@@ -2,7 +2,6 @@ import asyncio
 import aiohttp
 from datetime import datetime
 from math import ceil
-from sqlalchemy import delete
 from database.conn import async_session
 from database.billing import add_documents, update_documents, add_summary, update_summary, add_details, update_details, add_insurtech, update_insurtech, add_fulfillment, update_fulfillment, create_or_update_periods
 from config.logging import logger
@@ -28,7 +27,7 @@ async def get_documets(billing_api, session, user_id, key, group, document_type,
                         tasks.append(asyncio.create_task(billing_api.billing_documents(client_session, key, group, document_type, offset)))
                         offset += limit
 
-                    results = await asyncio.gather(*tasks)
+                    results = await asyncio.gather(*tasks, return_exceptions=False)
                     for result in results:
                         for document in result['results']:
                             
@@ -42,12 +41,11 @@ async def get_documets(billing_api, session, user_id, key, group, document_type,
                 
                 else:
                     # logger.warning('Falha na solicitação', extra={'user_id': user_id, 'body': f'status: {api_call}', 'init_at': init_at, 'end_at': datetime.now()})
-                    # print(api_call)
-                    pass
+                    print(api_call)
 
     except Exception as err:
         #logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
-        print(err)
+        print(f'Relatório de Faturamento - documentos: {err}')
 
 
 async def get_summary(billing_api, session, user_id, key, group, document_type, operation):
@@ -70,7 +68,7 @@ async def get_summary(billing_api, session, user_id, key, group, document_type, 
                     # logger.warning('Falha na solicitação', extra={'user_id': user_id, 'body': f'status: {api_call}', 'init_at': init_at, 'end_at': datetime.now()})
 
     except Exception as err:
-        print(err)
+        print(f'Relatório de Faturamento - resumo: {err}')
         #logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
 
 
@@ -78,6 +76,7 @@ async def get_details(billing_api, session, user_id, key, group, document_type, 
     try:
         if operation:
             semaphore = asyncio.Semaphore(5)
+            
             async with aiohttp.ClientSession() as client_session:
                 api_call = await billing_api.billing_details(client_session, key, group, document_type)
                 
@@ -101,24 +100,21 @@ async def get_details(billing_api, session, user_id, key, group, document_type, 
                                 if operation == 'update':
                                     await update_details(session, user_id, info)
                     
-                    tasks = []
-                    for page in range(0, max_pages):
-                        tasks = await fetch_and_process_page(offset)
-                        offset += limit
-                        await asyncio.sleep(0.5)
-                    
-                    await asyncio.gather(*tasks)
 
+                    for page in range(0, max_pages):
+                        await asyncio.gather(fetch_and_process_page(offset), return_exceptions=False)
+                        offset += limit
+                        await asyncio.sleep(0.2)
+                    
                     # logger.info(f'Tarefa Concluída - {count} novos registros', extra={'user_id': user_id, 'body': None, 'init_at': init_at, 'end_at': datetime.now()})
                 
                 else:
                     # logger.warning('Falha na solicitação', extra={'user_id': user_id, 'body': f'status: {api_call}', 'init_at': init_at, 'end_at': datetime.now()})
-                    # print(api_call)
-                    pass
+                    print(api_call)
 
     except Exception as err:
         # logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
-        print(err)
+        print(f'Relatório de Faturamento - detalhes: {err}')
 
 
 async def get_insurtech(billing_api, session, user_id, key, group, document_type, operation):
@@ -138,7 +134,7 @@ async def get_insurtech(billing_api, session, user_id, key, group, document_type
                         tasks.append(asyncio.create_task(billing_api.billing_insurtech(client_session, key, group, document_type, offset)))
                         offset += limit
 
-                    results = await asyncio.gather(*tasks)
+                    results = await asyncio.gather(*tasks, return_exceptions=False)
                     for result in results:
                         for info in result['results']:
                             
@@ -156,7 +152,7 @@ async def get_insurtech(billing_api, session, user_id, key, group, document_type
 
     except Exception as err:
         #logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
-        print(err)
+        print(f'Relatório de Faturamento - garantias: {err}')
 
 
 async def get_fulfillment(billing_api, session, user_id, key, group, document_type, operation):
@@ -176,7 +172,7 @@ async def get_fulfillment(billing_api, session, user_id, key, group, document_ty
                         tasks.append(asyncio.create_task(billing_api.billing_fulfillment(client_session, key, group, document_type, offset)))
                         offset += limit
 
-                    results = await asyncio.gather(*tasks)
+                    results = await asyncio.gather(*tasks, return_exceptions=False)
                     for result in results:
                         for info in result['results']:
                             
@@ -193,8 +189,8 @@ async def get_fulfillment(billing_api, session, user_id, key, group, document_ty
                     pass
 
     except Exception as err:
-        #logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
-        print(err)
+        # logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
+        print(f'Relatório de Faturamento - full: {err}')
 
 
 async def get_billings(billing_api, user_id):
@@ -220,7 +216,7 @@ async def get_billings(billing_api, user_id):
                                 tasks.append(asyncio.create_task(billing_api.billing_periods(client_session, group, document_type, offset)))
                                 offset += limit
 
-                            results = await asyncio.gather(*tasks)
+                            results = await asyncio.gather(*tasks, return_exceptions=False)
                             for result in results:
                                 for billing in result['results']:
                                     key = str(billing['key'])
@@ -242,7 +238,6 @@ async def get_billings(billing_api, user_id):
                             logger.info(f'Tarefa finalizada({group} / {document_type}): Total de {count_add} novos registros e {count_update} registros atualizados', extra={'user_id': user_id, 'body': None, 'init_at': init_at, 'end_at': datetime.now()})
                         else:
                             logger.warning('Falha na solicitação', extra={'user_id': user_id, 'body': f'status: {api_call}', 'init_at': init_at, 'end_at': datetime.now()})
-                            return api_call
 
             except Exception as err:
                 logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
