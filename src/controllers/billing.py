@@ -2,7 +2,7 @@ import asyncio
 import aiohttp
 from datetime import datetime
 from math import ceil
-from database.conn import async_session
+from database.conn import async_session, async_engine
 from database.billing import add_documents, update_documents, add_summary, update_summary, add_details, update_details, add_insurtech, update_insurtech, add_fulfillment, update_fulfillment, create_or_update_periods
 from config.logging import logger
 
@@ -75,7 +75,7 @@ async def get_summary(billing_api, session, user_id, key, group, document_type, 
 async def get_details(billing_api, session, user_id, key, group, document_type, operation):
     try:
         if operation:
-            semaphore = asyncio.Semaphore(50)
+            semaphore = asyncio.Semaphore(25)
             
             async with aiohttp.ClientSession() as client_session:
                 api_call = await billing_api.billing_details(client_session, key, group, document_type, offset=0, limit=1)
@@ -106,7 +106,6 @@ async def get_details(billing_api, session, user_id, key, group, document_type, 
                     
                     task = []
                     for page in range(0, max_pages):
-                        print(page, max_pages)
                         task.append(asyncio.create_task(fetch_and_process_page(offset)))
                         offset += limit
                     
@@ -246,6 +245,4 @@ async def get_billings(billing_api, user_id):
 
             except Exception as err:
                 logger.error('Falha na execução', extra={'user_id': user_id, 'body': err, 'init_at': init_at, 'end_at': datetime.now()})
-            
-            finally:
-                await session.close()
+

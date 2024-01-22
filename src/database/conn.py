@@ -41,3 +41,5 @@ try:
     async_session = AsyncSession(async_engine, expire_on_commit=False)
 except Exception as err:
     logging.error(f'Não foi possível conectar ao banco de dados. Erro: {err}')
+
+

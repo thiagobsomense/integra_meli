@@ -1,6 +1,8 @@
 import json
+import warnings
 from datetime import datetime
 from sqlalchemy import select, update
+from sqlalchemy import exc as sa_exc
 from database.conn import FatPeriodosML, FatDocumentosML, FatResumoML, FatDetalhesML, FatGarantiasML, FatLogFullML
 
 
@@ -190,10 +192,12 @@ async def add_details(session, user_id, key, group, document_type, response):
         'currency_id': response['currency_info']['currency_id']
     }
 
-    session.add(FatDetalhesML(data_atualizacao=datetime.now(), **data))
-    query = update(FatPeriodosML).where(FatPeriodosML.user_id == user_id, FatPeriodosML.key == key, FatPeriodosML.group ==
-                                        group, FatPeriodosML.document_type == document_type).values(data_atualizacao=datetime.now(), is_details=True)
-    await session.execute(query)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', category=sa_exc.SAWarning)
+        session.add(FatDetalhesML(data_atualizacao=datetime.now(), **data))
+        query = update(FatPeriodosML).where(FatPeriodosML.user_id == user_id, FatPeriodosML.key == key, FatPeriodosML.group ==
+                                            group, FatPeriodosML.document_type == document_type).values(data_atualizacao=datetime.now(), is_details=True)
+        await session.execute(query)
 
 
 async def update_details(session, user_id, response):
