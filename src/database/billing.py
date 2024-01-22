@@ -154,7 +154,6 @@ async def update_summary(session, user_id, key, group, document_type, response):
 
 
 async def add_details(session, user_id, key, group, document_type, response):
-    discount_info = response['discount_info']
     shipping_info = response['shipping_info']
 
     data = {
@@ -177,9 +176,9 @@ async def add_details(session, user_id, key, group, document_type, response):
         'detail_amount': response['charge_info']['detail_amount'],
         'detail_type': response['charge_info']['detail_type'],
         'detail_sub_type': response['charge_info']['detail_sub_type'],
-        'charge_amount_without_discount': 0 if discount_info == None else response['discount_info']['charge_amount_without_discount'],
-        'discount_amount': 0 if discount_info == None else response['discount_info']['discount_amount'],
-        'discount_reason': None if discount_info == None else response['discount_info']['discount_reason'],
+        'charge_amount_without_discount': 0 if group == 'MP' else response['discount_info']['charge_amount_without_discount'],
+        'discount_amount': 0 if group == 'MP' else response['discount_info']['discount_amount'],
+        'discount_reason': None if group == 'MP' else response['discount_info']['discount_reason'],
         'sales_info_json': None if group == 'MP' else json.dumps(response['sales_info']),
         'shipping_id': None if shipping_info == None else response['shipping_info']['shipping_id'],
         'pack_id': None if shipping_info == None else response['shipping_info']['pack_id'],
