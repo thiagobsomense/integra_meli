@@ -154,7 +154,6 @@ async def update_summary(session, user_id, key, group, document_type, response):
 
 
 async def add_details(session, user_id, key, group, document_type, response):
-    shipping_info = response['shipping_info']
 
     data = {
         'user_id': user_id,
@@ -170,9 +169,9 @@ async def add_details(session, user_id, key, group, document_type, response):
         'transaction_detail': response['charge_info']['transaction_detail'],
         'debited_from_operation': None if group == 'MP' else response['charge_info']['debited_from_operation'],
         'debited_from_operation_description': None if group == 'MP' else response['charge_info']['debited_from_operation_description'],
-        'status': response['charge_info']['status'],
-        'status_description': response['charge_info']['status_description'],
-        'charge_bonified_id': response['charge_info']['charge_bonified_id'],
+        'status': None if group == 'MP' else response['charge_info']['status'],
+        'status_description': None if group == 'MP' else response['charge_info']['status_description'],
+        'charge_bonified_id': None if group == 'MP' else response['charge_info']['charge_bonified_id'],
         'detail_amount': response['charge_info']['detail_amount'],
         'detail_type': response['charge_info']['detail_type'],
         'detail_sub_type': response['charge_info']['detail_sub_type'],
@@ -180,9 +179,9 @@ async def add_details(session, user_id, key, group, document_type, response):
         'discount_amount': 0 if group == 'MP' else response['discount_info']['discount_amount'],
         'discount_reason': None if group == 'MP' else response['discount_info']['discount_reason'],
         'sales_info_json': None if group == 'MP' else json.dumps(response['sales_info']),
-        'shipping_id': None if shipping_info == None else response['shipping_info']['shipping_id'],
-        'pack_id': None if shipping_info == None else response['shipping_info']['pack_id'],
-        'receiver_shipping_cost': None if shipping_info == None else response['shipping_info']['receiver_shipping_cost'],
+        'shipping_id': None if group == 'MP' else response['shipping_info']['shipping_id'],
+        'pack_id': None if group == 'MP' else response['shipping_info']['pack_id'],
+        'receiver_shipping_cost': None if group == 'MP' else response['shipping_info']['receiver_shipping_cost'],
         'items_info_json': None if group == 'MP' else json.dumps(response['items_info']),
         'operation_info_json': json.dumps(response['operation_info']) if group == 'MP' else None,
         'perception_info_json': json.dumps(response['perception_info']) if group == 'MP' else None,
