@@ -157,8 +157,8 @@ async def add_details(session, user_id, key, group, document_type, response):
 
     data = {
         'user_id': user_id,
-        'key': key,
-        'group': group,
+        'key_ml': key,
+        'group_ml': group,
         'document_type': document_type,
         'legal_document_number': response['charge_info']['legal_document_number'],
         'legal_document_status': response['charge_info']['legal_document_status'],
