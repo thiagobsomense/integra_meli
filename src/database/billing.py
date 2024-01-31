@@ -167,8 +167,8 @@ async def add_details(session, user_id, key, group, document_type, response):
         'detail_id': response['charge_info']['detail_id'],
         'movement_id': response['charge_info']['movement_id'] if group == 'MP' else None,
         'transaction_detail': response['charge_info']['transaction_detail'],
-        'debited_from_operation': None if group == 'MP' else response['charge_info']['debited_from_operation'],
-        'debited_from_operation_description': None if group == 'MP' else response['charge_info']['debited_from_operation_description'],
+        'debited_from_operation': None if group == 'ML' else response['charge_info']['debited_from_operation'],
+        'debited_from_operation_description': None if group == 'ML' else response['charge_info']['debited_from_operation_description'],
         'status': None if group == 'MP' else response['charge_info']['status'],
         'status_description': None if group == 'MP' else response['charge_info']['status_description'],
         'charge_bonified_id': None if group == 'MP' else response['charge_info']['charge_bonified_id'],
@@ -198,21 +198,29 @@ async def add_details(session, user_id, key, group, document_type, response):
         await session.execute(query)
 
 
-async def update_details(session, user_id, response):
+async def update_details(session, user_id, key, group, document_type, list_updt, response):
     data = {
+        'user_id': user_id,
+        'key_ml': key,
+        'group_ml': group,
+        'document_type': document_type,
         'legal_document_number': response['charge_info']['legal_document_number'],
         'legal_document_status': response['charge_info']['legal_document_status'],
         'legal_document_status_description': response['charge_info']['legal_document_status_description'],
-        'debited_from_operation': response['charge_info']['debited_from_operation'] or None,
-        'debited_from_operation_description': response['charge_info']['debited_from_operation_description'],
-        'status': response['charge_info']['status'],
-        'status_description': response['charge_info']['status_description'],
-        'charge_bonified_id': response['charge_info']['charge_bonified_id']
+        'debited_from_operation': None if group == 'ML' else response['charge_info']['debited_from_operation'],
+        'debited_from_operation_description': None if group == 'ML' else response['charge_info']['debited_from_operation_description'],
+        'status': None if group == 'MP' else response['charge_info']['status'],
+        'status_description': None if group == 'MP' else response['charge_info']['status_description'],
+        'charge_bonified_id': None if group == 'MP' else response['charge_info']['charge_bonified_id']
     }
 
     detail_id = str(response['charge_info']['detail_id'])
-    query = update(FatDetalhesML).where(FatDetalhesML.user_id == user_id, FatDetalhesML.detail_id == detail_id).values(data_atualizacao=datetime.now(), **data)
-    await session.execute(query)
+    if detail_id in list_updt.scalars().all():
+        # query = update(FatDetalhesML).where(FatDetalhesML.user_id == user_id, FatDetalhesML.group_ml == group, FatDetalhesML.document_type == document_type, FatDetalhesML.detail_id == detail_id).values(data_atualizacao=datetime.now(), **data)
+        # await session.execute(query)
+        return data
+    else:
+        await add_details(session, user_id, key, group, document_type, response)
 
 
 async def add_insurtech(session, user_id, key, group, document_type, response):

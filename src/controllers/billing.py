@@ -2,7 +2,9 @@ import asyncio
 import aiohttp
 from datetime import datetime
 from math import ceil
-from database.conn import async_session, async_engine
+from sqlalchemy import select, update
+from sqlalchemy.sql.expression import bindparam
+from database.conn import async_session, FatDetalhesML
 from database.billing import add_documents, update_documents, add_summary, update_summary, add_details, update_details, add_insurtech, update_insurtech, add_fulfillment, update_fulfillment, create_or_update_periods
 from config.logging import logger
 
@@ -86,6 +88,21 @@ async def get_details(billing_api, session, user_id, key, group, document_type, 
                     limit = 150 # api_call['limit']
                     max_pages = ceil(total / limit)
 
+                    stmt = update(FatDetalhesML)\
+                        .where(FatDetalhesML.user_id == bindparam('user_id'), FatDetalhesML.key_ml == bindparam('key'), FatDetalhesML.group_ml == bindparam('group'), FatDetalhesML.document_type == bindparam('document_type'))\
+                        .values({
+                            'legal_document_number': bindparam('legal_document_number'),
+                            'legal_document_status': bindparam('legal_document_status'),
+                            'legal_document_status_description': bindparam('legal_document_status_description'),
+                            'debited_from_operation': bindparam('debited_from_operation'),
+                            'debited_from_operation_description': bindparam('debited_from_operation_description'),
+                            'status': bindparam('status'),
+                            'status_description': bindparam('status_description'),
+                            'charge_bonified_id': bindparam('charge_bonified_id')
+                        })
+                    list_updt = await session.execute(select(FatDetalhesML.detail_id).where(FatDetalhesML.legal_document_status == 'PROCESSING'))
+                    query_updt = []
+
                     async def fetch_page(offset):
                         async with semaphore:
                             return await billing_api.billing_details(client_session, key, group, document_type, offset, limit)
@@ -101,7 +118,8 @@ async def get_details(billing_api, session, user_id, key, group, document_type, 
                                     await add_details(session, user_id, key, group, document_type, info)
 
                                 if operation == 'update':
-                                    await update_details(session, user_id, info)
+                                    upt = await update_details(session, user_id, key, group, document_type, list_updt, info)
+                                    query_updt.append(upt)
                     
                     
                     task = []
@@ -111,7 +129,9 @@ async def get_details(billing_api, session, user_id, key, group, document_type, 
                     
                     await asyncio.gather(*task, return_exceptions=False)
                     # logger.info(f'Tarefa Concluída - {count} novos registros', extra={'user_id': user_id, 'body': None, 'init_at': init_at, 'end_at': datetime.now()})
-                
+
+                    if query_updt:
+                        await session.execute(stmt, query_updt)
                 else:
                     # logger.warning('Falha na solicitação', extra={'user_id': user_id, 'body': f'status: {api_call}', 'init_at': init_at, 'end_at': datetime.now()})
                     print(api_call)
