@@ -221,6 +221,7 @@ async def update_details(session, user_id, key, group, document_type, list_updt,
         return data
     else:
         await add_details(session, user_id, key, group, document_type, response)
+        return None
 
 
 async def add_insurtech(session, user_id, key, group, document_type, response):

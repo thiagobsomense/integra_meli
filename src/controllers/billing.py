@@ -129,7 +129,7 @@ async def get_details(billing_api, session, user_id, key, group, document_type, 
                     
                     await asyncio.gather(*task, return_exceptions=False)
                     # logger.info(f'Tarefa Concluída - {count} novos registros', extra={'user_id': user_id, 'body': None, 'init_at': init_at, 'end_at': datetime.now()})
-
+                    
                     if query_updt:
                         await session.execute(stmt, query_updt)
                 else:
