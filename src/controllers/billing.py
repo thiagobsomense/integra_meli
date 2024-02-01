@@ -77,7 +77,7 @@ async def get_summary(billing_api, session, user_id, key, group, document_type, 
 async def get_details(billing_api, session, user_id, key, group, document_type, operation):
     try:
         if operation:
-            semaphore = asyncio.Semaphore(30)
+            semaphore = asyncio.Semaphore(25)
             
             async with aiohttp.ClientSession() as client_session:
                 api_call = await billing_api.billing_details(client_session, key, group, document_type, offset=0, limit=1)
