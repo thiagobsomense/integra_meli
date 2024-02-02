@@ -211,16 +211,19 @@ async def update_details(session, user_id, key, group, document_type, list_updt,
         'debited_from_operation_description': None if group == 'ML' else response['charge_info']['debited_from_operation_description'],
         'status': None if group == 'MP' else response['charge_info']['status'],
         'status_description': None if group == 'MP' else response['charge_info']['status_description'],
-        'charge_bonified_id': None if group == 'MP' else response['charge_info']['charge_bonified_id']
+        'charge_bonified_id': None if group == 'MP' else response['charge_info']['charge_bonified_id'],
+        'data_atualizacao': datetime.now()
     }
 
     detail_id = str(response['charge_info']['detail_id'])
+
     if detail_id in list_updt.scalars().all():
         # query = update(FatDetalhesML).where(FatDetalhesML.user_id == user_id, FatDetalhesML.group_ml == group, FatDetalhesML.document_type == document_type, FatDetalhesML.detail_id == detail_id).values(data_atualizacao=datetime.now(), **data)
         # await session.execute(query)
+        print(data)
         return data
     else:
-        await add_details(session, user_id, key, group, document_type, response)
+        # await add_details(session, user_id, key, group, document_type, response)
         return None
 
 
